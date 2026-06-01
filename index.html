@@ -3,465 +3,349 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Stok PRO v6 - Multi Klaster Jasmine & Senopati</title>
-    <!-- Tailwind CSS untuk Desain Premium -->
+    <title>Master Stock - Sales Control Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons untuk Icon Modern -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #f8fafc; 
-            color: #1e293b; 
-        }
-        .unit-kavling { 
-            transition: all 0.3s ease; 
-            cursor: pointer; 
-        }
-        .unit-kavling:hover { 
-            filter: brightness(1.15); 
-            opacity: 0.85; 
-            stroke: #000; 
-            stroke-width: 2px; 
-        }
-        #siteplan-wrapper svg { 
-            width: 100%; 
-            height: auto; 
-            display: block; 
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.05)); 
-        }
-        .st113 { 
-            fill: #E2E8F0; 
-            stroke: #475569; 
-            stroke-width: 1.5; 
-            transition: fill 0.5s ease; 
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .unit-kavling { transition: all 0.3s ease; cursor: pointer; }
+        .unit-kavling:hover { filter: brightness(1.15); opacity: 0.85; stroke: #000; stroke-width: 2px; }
+        #siteplan-wrapper svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.05)); }
+        .st113 { fill: #E2E8F0; stroke: #475569; stroke-width: 1.5; transition: fill 0.5s ease; }
         .log-error { color: #f43f5e; font-weight: 600; }
         .log-success { color: #10b981; font-weight: 600; }
-        /* Sembunyikan scrollbar untuk navigasi tab di mobile */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-3 md:p-8 antialiased">
 
     <div class="max-w-7xl mx-auto">
         <!-- Header Utama -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100 mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <span class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-sm italic">PRO v6</span>
-                    Dashboard Multi-Klaster Real-Time
+                <h1 class="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <span id="brand-badge" onclick="triggerAdminUnlock()" class="bg-indigo-600 text-white px-2.5 py-0.5 rounded-lg text-xs md:text-sm italic cursor-pointer select-none">LIVE</span>
+                    Master Stock
                 </h1>
-                <p id="connection-status" class="text-slate-400 text-xs mt-1">Status: Siap digunakan.</p>
+                <p id="connection-status" class="text-slate-400 text-[10px] md:text-xs mt-1">Status: Menghubungkan database...</p>
             </div>
-            <div class="flex gap-2 w-full md:w-auto justify-end">
-                <button onclick="hardResetApp()" class="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-rose-100/50 transition">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i> Reset Database
+            <!-- Tombol Navigasi Kontrol (Responsif & Fleksibel) -->
+            <div class="flex gap-2 w-full sm:w-auto justify-end">
+                <button id="btn-admin-reset" onclick="hardResetApp()" class="hidden bg-rose-50 border border-rose-100 text-rose-600 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-rose-100/50 transition">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Reset Database
                 </button>
-                <button onclick="syncData()" class="bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-slate-50 transition">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sinkron Live
+                <button id="btn-admin-settings" onclick="openSettings()" class="hidden bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition">
+                    <i data-lucide="settings" class="w-3.5 h-3.5"></i> Set Klaster
                 </button>
-                <button onclick="openSettings()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition">
-                    <i data-lucide="settings" class="w-4 h-4"></i> Pengaturan Klaster
+                <button onclick="syncData()" class="bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-50 transition">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sinkron Live
                 </button>
             </div>
         </div>
 
-        <!-- Navigasi Tab Horizontal (Mendukung Geser Layar/Swipe di HP) -->
-        <div class="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm mb-6 overflow-hidden">
-            <div id="tabs-container" class="flex gap-1 overflow-x-auto no-scrollbar scroll-smooth">
-                <!-- 10 Tab Klaster dimasukkan secara dinamis di sini -->
-            </div>
+        <!-- Navigasi Tab Horizontal (Swipeable Mobile) -->
+        <div class="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm mb-4 md:mb-6 overflow-hidden">
+            <div id="tabs-container" class="flex gap-1 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory"></div>
         </div>
 
-        <!-- Penghitung Statistik Klaster Aktif -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Total Unit</p>
-                <p id="stat-total" class="text-2xl font-bold text-slate-800">0</p>
+        <!-- Statistik Dinamis Compact (Grid 2x2 Mobile, 4 sejajar Desktop) -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 md:mb-6">
+            <div class="bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm">
+                <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Total Unit</p>
+                <p id="stat-total" class="text-xl md:text-2xl font-bold text-slate-800">0</p>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500">
-                <p class="text-[10px] font-bold text-emerald-600 uppercase">Available</p>
-                <p id="stat-available" class="text-2xl font-bold text-slate-800">0</p>
+            <div class="bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500">
+                <p class="text-[9px] md:text-[10px] font-bold text-emerald-600 uppercase">Available</p>
+                <p id="stat-available" class="text-xl md:text-2xl font-bold text-slate-800">0</p>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-amber-500">
-                <p class="text-[10px] font-bold text-amber-600 uppercase">Reserved</p>
-                <p id="stat-reserved" class="text-2xl font-bold text-slate-800">0</p>
+            <div class="bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-amber-500">
+                <p class="text-[9px] md:text-[10px] font-bold text-amber-600 uppercase">Reserved</p>
+                <p id="stat-reserved" class="text-xl md:text-2xl font-bold text-slate-800">0</p>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-rose-500">
-                <p class="text-[10px] font-bold text-rose-600 uppercase">Sold</p>
-                <p id="stat-sold" class="text-2xl font-bold text-slate-800">0</p>
+            <div class="bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-rose-500">
+                <p class="text-[9px] md:text-[10px] font-bold text-rose-600 uppercase">Sold</p>
+                <p id="stat-sold" class="text-xl md:text-2xl font-bold text-slate-800">0</p>
             </div>
         </div>
 
         <!-- Area Tampilan Utama -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Tampilan Peta Vektor -->
-            <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm min-h-[500px] flex flex-col">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                        <i data-lucide="map" class="text-indigo-600 w-5 h-5"></i>
-                        Peta Siteplan: <span id="active-cluster-title" class="text-indigo-600">-</span>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+            <!-- Peta Siteplan -->
+            <div class="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm min-h-[380px] md:min-h-[500px] flex flex-col relative">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 md:mb-6">
+                    <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-1.5">
+                        <i data-lucide="map" class="text-indigo-600 w-4.5 h-4.5"></i> 
+                        Klaster: <span id="active-cluster-title" class="text-indigo-600">-</span>
                     </h3>
-                    <div class="flex gap-3 text-[10px] font-bold uppercase tracking-wider">
-                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span> Available</span>
-                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-amber-400 rounded-full"></span> Reserved</span>
-                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-rose-500 rounded-full"></span> Sold</span>
+                    <div class="flex gap-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Ready</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-amber-400 rounded-full"></span> Booked</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-rose-500 rounded-full"></span> Sold</span>
                     </div>
                 </div>
-                <!-- Tempat Rendering SVG Gambar -->
-                <div id="siteplan-wrapper" class="flex-1 bg-slate-50 rounded-xl p-4 min-h-[400px] flex items-center justify-center border border-slate-100 overflow-hidden">
-                    <!-- Dinamis terisi peta SVG -->
+                
+                <!-- Floating Zoom Controls (Ergonomis untuk Jempol Mobile) -->
+                <div class="absolute right-6 bottom-6 z-10 flex flex-col gap-2 shadow-sm rounded-xl overflow-hidden border border-slate-100 bg-white/90 backdrop-blur-sm">
+                    <button onclick="adjustZoom(1.25)" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 active:bg-slate-200 border-b border-slate-100 transition"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                    <button onclick="adjustZoom(0.8)" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 active:bg-slate-200 border-b border-slate-100 transition"><i data-lucide="minus" class="w-4 h-4"></i></button>
+                    <button onclick="resetZoom()" class="w-10 h-10 flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition"><i data-lucide="maximize" class="w-3.5 h-3.5"></i></button>
+                </div>
+
+                <!-- Wadah Siteplan dengan Batasan Tinggi Tinggi Mobile -->
+                <div class="flex-1 bg-slate-50 rounded-xl p-2 md:p-4 min-h-[300px] md:min-h-[400px] max-h-[420px] md:max-h-none flex items-center justify-center border border-slate-100 overflow-hidden relative">
+                    <div id="siteplan-wrapper" class="w-full h-full flex items-center justify-center">
+                        <div id="siteplan-container" class="transition-transform duration-200 ease-out origin-center cursor-grab active:cursor-grabbing w-full max-w-[700px]">
+                            <!-- SVG disuntikkan secara dinamis di sini -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Daftar Stok Unit Samping -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-[560px] flex flex-col">
-                <h3 class="font-bold text-slate-800 mb-4">Daftar Unit Real-Time</h3>
-                <div class="relative mb-4">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                    <input type="text" id="search" onkeyup="renderList()" placeholder="Cari unit..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl text-sm outline-none border border-transparent focus:border-indigo-500 transition">
+            <!-- List Unit Real-Time (Mencegah Layar Bergulir Terlalu Panjang di Mobile) -->
+            <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm h-[400px] md:h-[560px] flex flex-col">
+                <h3 class="font-bold text-slate-800 text-sm md:text-base mb-3 md:mb-4">Daftar Unit</h3>
+                <div class="relative mb-3 md:mb-4">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3.5 text-slate-400"></i>
+                    <input type="text" id="search" onkeyup="renderList()" placeholder="Cari nomor unit..." class="w-full pl-10 pr-4 py-2.5 md:py-3 bg-slate-50 rounded-xl text-xs md:text-sm outline-none border border-transparent focus:border-indigo-500 transition">
                 </div>
-                <div id="list-wrapper" class="flex-1 overflow-y-auto space-y-2 pr-2">
-                    <!-- Dinamis terisi data unit -->
-                </div>
+                <div id="list-wrapper" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL PENGATURAN KLASTER INDIVIDUAL -->
-    <div id="modal-settings" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <!-- MODAL CONFIGURATION (ADMIN ONLY) -->
+    <div id="modal-settings" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
         <div class="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="font-bold text-slate-800 flex items-center gap-1.5 text-sm md:text-base">
                     <i data-lucide="database" class="text-indigo-600"></i> 
                     Konfigurasi: <span id="settings-tab-title" class="text-indigo-600">-</span>
                 </h3>
-                <button onclick="closeSettings()" class="p-2 hover:bg-slate-200 rounded-full transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeSettings()" class="p-2 hover:bg-slate-200 rounded-full transition"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             
-            <div class="p-6 overflow-y-auto flex-1 space-y-6">
-                <!-- Edit Nama Klaster -->
+            <div class="p-5 overflow-y-auto flex-1 space-y-5">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Nama Klaster / Tab</label>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Nama Klaster / Tab</label>
                     <input type="text" id="tab-name" placeholder="Contoh: Jasmine, Orchid, Sakura..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-600">
                 </div>
 
-                <!-- Google Sheets -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Link Google Sheets (Live Sync)</label>
-                    <input type="text" id="sheet-url" placeholder="Paste link Google Sheet biasa (Bukan Link Publikasi CSV)..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-600">
-                    <p class="text-[10px] text-slate-400 mt-2"><b>Tips Bypass CORS:</b> Masukkan link Google Sheet biasa (yang Anda gunakan untuk mengedit di browser, contoh: <code>https://docs.google.com/spreadsheets/d/.../edit</code>) agar sinkronisasi bypass CORS bekerja 100% dari komputer lokal.</p>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Link Google Sheets (Live Sync)</label>
+                    <input type="text" id="sheet-url" placeholder="Paste link Google Sheet biasa..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-600">
+                    <p class="text-[9px] text-slate-400 mt-1.5">Masukkan tautan edit browser biasa (Bukan Link Publikasi CSV). Pastikan status hak akses diatur <b>"Anyone with link can View"</b>.</p>
                 </div>
 
-                <!-- SVG Editor -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Editor Kode Siteplan (Paste SVG di bawah)</label>
-                    <textarea id="svg-input" rows="8" placeholder="Buka file .svg di Notepad, lalu copy dan paste seluruh kodenya di sini..." class="w-full p-4 bg-slate-900 text-emerald-400 font-mono text-[10px] rounded-xl outline-none focus:ring-2 focus:ring-indigo-600"></textarea>
-                    <div class="bg-indigo-50 p-3 rounded-xl mt-2">
-                        <p class="text-[10px] text-indigo-700 leading-relaxed font-semibold">
-                            💡 Setiap tab klaster menyimpan kode SVG tersendiri. Anda dapat mendesain gambar klaster berbeda untuk masing-masing tab secara fleksibel.
-                        </p>
-                    </div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Kode Vektor Siteplan (Paste SVG)</label>
+                    <textarea id="svg-input" rows="6" placeholder="Buka file .svg di Notepad, lalu copy dan paste kodenya di sini..." class="w-full p-3 bg-slate-900 text-emerald-400 font-mono text-[9px] rounded-xl outline-none focus:ring-2 focus:ring-indigo-600"></textarea>
                 </div>
             </div>
 
-            <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-between gap-2">
-                <button onclick="resetCurrentTab()" class="px-4 py-2.5 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition">Reset Tab Ini</button>
+            <div class="p-5 bg-slate-50 border-t border-slate-100 flex justify-between gap-2">
+                <button onclick="resetCurrentTab()" class="px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition">Reset Tab Ini</button>
                 <div class="flex gap-2">
-                    <button onclick="closeSettings()" class="px-6 py-2.5 text-sm font-bold text-slate-400">Batal</button>
-                    <button onclick="saveAndApply()" class="bg-indigo-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-100">Simpan &amp; Terapkan</button>
+                    <button onclick="closeSettings()" class="px-4 py-2 text-xs font-bold text-slate-400">Batal</button>
+                    <button onclick="saveAndApply()" class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-indigo-100">Terapkan</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL POP-UP DETAIL UNIT -->
-    <div id="modal-detail" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
-            <div id="det-status-bg" class="p-8 text-white text-center">
-                <h2 id="det-id" class="text-4xl font-bold mb-1">-</h2>
-                <p id="det-status-text" class="text-xs font-bold uppercase tracking-widest opacity-80">-</p>
+    <!-- MODAL DETAIL UNIT (Mobile Bottom Sheet / Desktop Centered Dialog) -->
+    <div id="modal-detail" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all duration-300">
+        <div class="bg-white w-full max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[90vh]">
+            <div id="det-status-bg" class="p-6 md:p-8 text-white text-center relative flex-shrink-0">
+                <h2 id="det-id" class="text-3xl md:text-4xl font-bold mb-1">-</h2>
+                <p id="det-status-text" class="text-[10px] font-bold uppercase tracking-widest opacity-80">-</p>
+                <button onclick="closeDetail()" class="absolute right-4 top-4 text-white/80 hover:text-white p-1.5 hover:bg-white/10 rounded-full transition"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <div class="p-6 space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[10px] font-bold text-slate-400 uppercase block">Luas Tanah</span><span id="det-lt" class="text-lg font-bold text-slate-700">-</span></div>
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[10px] font-bold text-slate-400 uppercase block">Luas Bangunan</span><span id="det-lb" class="text-lg font-bold text-slate-700">-</span></div>
+            <div class="p-5 space-y-4 overflow-y-auto no-scrollbar">
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase block">Luas Tanah</span><span id="det-lt" class="text-sm md:text-base font-bold text-slate-700">-</span></div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase block">Luas Bangunan</span><span id="det-lb" class="text-sm md:text-base font-bold text-slate-700">-</span></div>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[10px] font-bold text-slate-400 uppercase block">Kamar Tidur</span><span id="det-kt" class="text-lg font-bold text-slate-700">-</span></div>
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[10px] font-bold text-slate-400 uppercase block">Kamar Mandi</span><span id="det-km" class="text-lg font-bold text-slate-700">-</span></div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase block">Kamar Tidur</span><span id="det-kt" class="text-sm md:text-base font-bold text-slate-700">-</span></div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase block">Kamar Mandi</span><span id="det-km" class="text-sm md:text-base font-bold text-slate-700">-</span></div>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[10px] font-bold text-slate-400 uppercase block">Ruang Tamu</span><span id="det-rt" class="text-lg font-bold text-slate-700">-</span></div>
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[10px] font-bold text-slate-400 uppercase block">Carport</span><span id="det-carport" class="text-lg font-bold text-slate-700">-</span></div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div><span class="text-[9px] font-bold text-slate-400 uppercase block">Ruang Tamu</span><span id="det-rt" class="font-bold text-slate-700">-</span></div>
+                        <div><span class="text-[9px] font-bold text-slate-400 uppercase block">Carport</span><span id="det-carport" class="font-bold text-slate-700">-</span></div>
+                    </div>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-2xl">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-3">Floorplan Denah</p>
-                    <img id="det-img" src="" class="w-full h-44 object-contain rounded-xl bg-white border border-slate-200" alt="Floorplan">
+                <div class="bg-slate-50 p-3 rounded-2xl">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Floorplan Denah</p>
+                    <img id="det-img" src="" class="w-full h-32 md:h-40 object-contain rounded-xl bg-white border border-slate-150" alt="Floorplan">
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="closeDetail()" class="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold transition hover:bg-slate-200">Tutup</button>
-                    <a id="det-whatsapp" href="" target="_blank" class="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 transition">
-                        <i data-lucide="message-circle" class="w-5 h-5"></i> Hubungi Sales
-                    </a>
-                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex gap-2.5 flex-shrink-0">
+                <button onclick="closeDetail()" class="flex-1 py-3 bg-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-300 transition">Tutup</button>
+                <a id="det-whatsapp" href="" target="_blank" class="flex-1 py-3 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 hover:bg-emerald-700 transition">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i> Hubungi Sales
+                </a>
             </div>
         </div>
     </div>
 
     <script>
-        // Default Jasmine SVG (Optimasi Tanpa Gambar Satelit Rusak)
-        const defaultJasmineSVG = `<?xml version="1.0" encoding="utf-8"?>
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1388.98 1076.59" style="enable-background:new 0 0 1388.98 1076.59;" xml:space="preserve">
-<rect width="1388.98" height="1076.59" fill="#f1f5f9" rx="12" />
-<g id="Layer_1">
-    <path style="fill:#E2E8F0;" d="M439.49,729.63c0,0,33.01-32.39,60.94-45.78c27.93-13.39,54.17-18.14,54.17-18.14l71.95-8.64L744.2,615.6l85.07-22.89l28.35-8.21c0,0,54.17-32.83,71.95-39.74c17.78-6.91,115.11-40.17,118.5-38.87c3.39,1.29,53.32,5.18,68.56,12.09c15.24,6.91,74.49,19,74.49,19l130.35-15.55l23.91-62.19c0,0,7.62-97.18,22.85-128.28c15.24-31.1,19.04-44.7,39.99-46.65c20.95-1.94,45.71-1.94,45.71-1.94l-1.71,795.93h-1705.6l-2.88-258.85l374.54,73.86l214.56,31.1l27.93-37.58l21.58-14.25 L439.49,729.63z"/>
-    <path class="st51" d="M-273.83,896.99l146.43,18.14c0,0,98.18,30.23,142.2,31.96c44.01,1.73,362.27-19.87,362.27-19.87l21.16-39.74l55.86,1.73l14.39-96.75c0,0,43.17-69.97,86.34-82.06c43.17-12.09,90.57-23.32,90.57-23.32l109.19-34.55c0,0,93.95-38.01,136.27-40.6c42.32-2.59,120.19-6.05,176.9-6.05c56.71,0,71.95,8.64,143.05-8.64c71.1-17.28,120.19-59.6,120.19-59.6l13.54-69.11l10.16-101.93"/>
-    <linearGradient id="SVGID_00000086661920575694034170000012274574013139753360_" gradientUnits="userSpaceOnUse" x1="10.2619" y1="79.4776" x2="340.6343" y2="79.4776">
-        <stop  offset="0" style="stop-color:#996527"/><stop  offset="0.2352" style="stop-color:#D3B34B"/><stop  offset="0.524" style="stop-color:#EDEC81"/><stop  offset="1" style="stop-color:#996527"/>
-    </linearGradient>
-    <path style="fill:url(#SVGID_00000086661920575694034170000012274574013139753360_);" d="M263.54,141.52H10.26V17.44h330.37v66.28 C340.63,115.64,306.12,141.52,263.54,141.52z"/>
-    <text transform="matrix(1.1331 0 0 1 57.0869 96.8915)" class="st110 st111 st112">JASMINE</text>
-</g>
-<g id="E166"><path class="st113" d="M1255.87,422.74l71.11,98.68l-130.86,15.45l18.64-109.53c0,0,16.09,6.89,25.53,4.09 C1249.74,428.61,1255.87,422.74,1255.87,422.74z"/><text transform="matrix(1 0 0 1 1221.9149 470.6278)" class="st114 st115">E166</text></g>
-<g id="E167"><path class="st113" d="M1116.86,415.82c0.12,1.05,16.97,105.98,16.97,105.98l62.3,15.06l18.64-109.53c0,0-12.77-2.81-17.62-14.55 s-6.13-19.15-6.13-19.15L1116.86,415.82z"/><text transform="matrix(1 0 0 1 1150.1705 448.5272)" class="st114 st115">E167</text></g>
-<g id="E175"><path class="st113" d="M1121.96,448.91l-85.15,3.02l-3.11-4.37c0,0-10.85,15.26-15.95,17.99c-5.11,2.72-13.88,5.01-13.88,5.01 l11.5,46.73c0,0,32.07-11.15,38.33-10.34c6.26,0.81,80.13,14.85,80.13,14.85L1121.96,448.91z"/><text transform="matrix(1 0 0 1 1054.1699 474.059)" class="st114 st115">E175</text></g>
-<g id="E176"><path class="st113" d="M903.7,559.17l26.55-14.3l85.11-27.57l-11.5-46.73c0,0-10.97,1.45-16.41,0.43 c-5.45-1.02-19.74-9.53-19.74-9.53l-2.38,5.45L889.28,490L903.7,559.17z"/><text transform="matrix(1 0 0 1 930.9365 505.7185)" class="st114 st115">E176</text></g>
-<g id="E185"><path class="st113" d="M803.96,596.36c1.02-0.26,55.4-9.96,55.4-9.96l42.89-26.04l-11.74-64.85l-70.47,20.43l-24.51-19.15 c0,0-4.09,6.38-9.7,9.7c-5.62,3.32-12.09,5.87-12.09,5.87L803.96,596.36z"/><text transform="matrix(1 0 0 1 815.4464 543.2502)" class="st114 st115">E185</text></g>
-<g id="E186"><path class="st113" d="M741.91,509.8l-31.15,30.64l25.28,79.15l62.81-19.66l5.87-3.06l-30.38-83.74c0,0-9.7,2.04-17.87,1.53 S741.91,509.8,741.91,509.8z"/><text transform="matrix(1 0 0 1 731.702 560.1017)" class="st114 st115">E186</text></g>
-<g id="E187"><path class="st113" d="M676.3,640.02l-36.82-111.15l88.65-34.39c0,0,2.55,5.87,6.64,9.45c4.09,3.57,7.15,5.87,7.15,5.87 l-31.15,30.64l25.79,80.94L676.3,640.02z"/><text transform="matrix(1 0 0 1 663.0215 564.6972)" class="st114 st115">E187</text></g>
-<g id="E195"><path class="st113" d="M602.89,535.97l-46.21,8.43c0,0,3.06,15.32-1.4,22.21s-9.19,14.68-9.19,14.68l32.34,80.51 c0,0,29.11-1.7,29.62-1.7s29.79-5.28,29.79-5.28l38.81-13.96l-37.45-110.98L602.89,535.97z"/><text transform="matrix(1 0 0 1 581.8298 592.5272)" class="st114 st115">E195</text></g>
-<g id="E196"><path class="st113" d="M414.85,665.29l30.13,59.74l32.31-25.02l33.06-20.17c0,0,16.85-8.43,17.87-9.19 c1.02-0.77,46.47-7.91,46.47-7.91l3.74-0.94l-32.34-81.28c0,0-8.94,12-17.36,13.79s-29.54-1.95-29.54-1.95l5.28,18.04l-91.15,51.83 L414.85,665.29z"/><text transform="matrix(1 0 0 1 474.8562 648.8599)" class="st114 st115">E196</text></g>
-<g id="E204"><path class="st113" d="M412.13,799.17l-68.09-49.02c0,0,0.34-15.66-1.02-22.47c-1.36-6.81-13.62-19.06-13.62-19.06l107.23,1.7 l8.34,14.72l-5.49,4.59L412.13,799.17z"/><text transform="matrix(1 0 0 1 371.6169 747.4208)" class="st114 st115">E204</text></g>
-<g id="E207"><path class="st113" d="M343.11,753.38c0,0-5.62,13.28-10.72,17.36c-5.11,4.09-15.32,9.7-15.32,9.7l37.28,111.83l30.64-25.79 l27.15-67.32l-68.26-48.09L343.11,753.38z"/><text transform="matrix(1 0 0 1 335.9573 796.0164)" class="st114 st115">E207</text></g>
-<g id="E208"><path class="st113" d="M272.89,915.51l57.45,6.38l24-29.62l-37.28-111.83c0,0-12,3.06-17.36,2.3c-5.36-0.77-14.55-4.85-14.55-4.85 l-19.4,21.45l4.09,115.15L272.89,915.51z"/><text transform="matrix(1 0 0 1 280.2977 836.6122)" class="st114 st115">E208</text></g>
-<g id="E209"><path class="st113" d="M184.55,828.7l-0.26,71.74l85.53,14.04l-4.09-115.15l19.4-21.45c0,0-7.15-3.06-13.79-13.02 c-6.64-9.96-7.15-20.17-7.15-20.17l-79.66,69.96V828.7z"/><text transform="matrix(1 0 0 1 208.553 834.0588)" class="st114 st115">E209</text></g>
-<g id="E222"><path class="st113" d="M35.19,772.27l14.52,106.36l134.58,21.81l-0.77-84.51L77.57,785.8l-21.19-50.04c0,0-7.66,10.47-13.28,13.53 s-11.17,4.95-11.17,4.95L35.19,772.27z"/><text transform="matrix(1 0 0 1 90.3404 836.3571)" class="st114 st115">E222</text></g>
-<g id="E221"><path class="st113" d="M166.17,718.65l16.6,72.26l1.79,23.74L77.57,785.8l-21.19-50.04c0,0,8.43-13.02,6.89-24.26 c-1.53-11.23-1.79-12.26-1.79-12.26L166.17,718.65z"/><text transform="matrix(1 0 0 1 93.9147 737.8035)" class="st114 st115">E221</text></g>
-<g id="E220"><path class="st113" d="M24.21,642.57c0,0,6.64,24.77,12.26,28.85c5.62,4.09,19.15,17.36,21.7,22.21s3.32,5.62,3.32,5.62 l104.68,19.4l-12.03-57.38l-16.5-36.61L23.96,641.04L24.21,642.57z"/><text transform="matrix(1 0 0 1 82.1704 655.5907)" class="st114 st115">E220</text></g>
-</svg>`;
+        // KUNCI DATABASE AWAN (PERSISTEN UNTUK SEMUA USER)
+        const CLOUD_BUCKET = "v6_errystok_db_live";
 
-        // SVG Klaster Senopati Hasil Perbaikan (Dilengkapi background image & 13 Kavling Interaktif S01-S13)
-        const defaultSenopatiSVG = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="100%" height="100%" viewBox="0 0 297 210" version="1.1" id="svg1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<defs>
-    <clipPath clipPathUnits="userSpaceOnUse" id="clipPath1"><path d="M 0.0355,0.0015 H 0.9736 V 0.9993 H 0.0355 Z" /></clipPath>
-</defs>
-<style type="text/css">
-    .unit-kavling { cursor: pointer; transition: all 0.3s ease; }
-    .unit-kavling:hover { filter: brightness(1.2); }
-    .unit-shape { fill: #94a3b8; stroke: #334155; stroke-width: 1.5; fill-opacity: 0.6; transition: fill 0.5s ease; }
-    .unit-label { font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-size: 11px; font-weight: bold; fill: #ffffff; pointer-events: none; text-anchor: middle; }
-</style>
-<!-- Background Dasar Canva -->
-<rect width="297" height="210" fill="#f8fafc" rx="5" />
-
-<!-- Group Transformasi Matrix Inkscape Asli -->
-<g id="g1" transform="matrix(0.26458333,0,0,0.26458334,4.9379573e-6,-6.4941279e-7)">
-    
-    <!-- GAMBAR LATAR BELAKANG ASLI (DIPERTAHANKAN) -->
-    <!-- Tips: Taruh file gambar "Siteplan Senopati.png" satu folder dengan file HTML ini -->
-    <image width="1" height="1" style="image-rendering:optimizeSpeed" preserveAspectRatio="none" href="Siteplan%20Senopati.png" id="image1" clip-path="url(#clipPath1)" transform="matrix(1196.6074,0,0,795.37826,-42.534971,-1.1975111)" />
-    
-    <!-- BULATAN INTERAKTIF S01 s/d S13 -->
-    <g id="S01" class="unit-kavling">
-        <circle class="unit-shape" cx="749.80" cy="249.71" r="17.14" />
-        <text x="749.80" y="253.5" class="unit-label">S01</text>
-    </g>
-    <g id="S02" class="unit-kavling">
-        <circle class="unit-shape" cx="658.36" cy="195.60" r="17.14" />
-        <text x="658.36" y="199.5" class="unit-label">S02</text>
-    </g>
-    <g id="S03" class="unit-kavling">
-        <circle class="unit-shape" cx="538.81" cy="181.30" r="17.14" />
-        <text x="538.81" y="185.0" class="unit-label">S03</text>
-    </g>
-    <g id="S04" class="unit-kavling">
-        <circle class="unit-shape" cx="451.77" cy="179.20" r="17.14" />
-        <text x="451.77" y="183.0" class="unit-label">S04</text>
-    </g>
-    <g id="S05" class="unit-kavling">
-        <circle class="unit-shape" cx="353.36" cy="191.55" r="17.14" />
-        <text x="353.36" y="195.5" class="unit-label">S05</text>
-    </g>
-    <g id="S06" class="unit-kavling">
-        <circle class="unit-shape" cx="258.82" cy="281.46" r="17.14" />
-        <text x="258.82" y="285.5" class="unit-label">S06</text>
-    </g>
-    <g id="S07" class="unit-kavling">
-        <circle class="unit-shape" cx="222.56" cy="368.47" r="17.14" />
-        <text x="222.56" y="372.5" class="unit-label">S07</text>
-    </g>
-    <g id="S08" class="unit-kavling">
-        <circle class="unit-shape" cx="210.01" cy="444.41" r="17.14" />
-        <text x="210.01" y="448.5" class="unit-label">S08</text>
-    </g>
-    <g id="S09" class="unit-kavling">
-        <circle class="unit-shape" cx="368.53" cy="509.67" r="17.14" />
-        <text x="368.53" y="513.5" class="unit-label">S09</text>
-    </g>
-    <g id="S10" class="unit-kavling">
-        <circle class="unit-shape" cx="433.96" cy="537.65" r="17.14" />
-        <text x="433.96" y="541.5" class="unit-label">S10</text>
-    </g>
-    <g id="S11" class="unit-kavling">
-        <circle class="unit-shape" cx="659.18" cy="411.41" r="17.14" />
-        <text x="659.18" y="415.5" class="unit-label">S11</text>
-    </g>
-    <g id="S12" class="unit-kavling">
-        <circle class="unit-shape" cx="496.24" cy="408.27" r="17.14" />
-        <text x="496.24" y="412.5" class="unit-label">S12</text>
-    </g>
-    <g id="S13" class="unit-kavling">
-        <circle class="unit-shape" cx="421.01" cy="383.60" r="17.14" />
-        <text x="421.01" y="387.5" class="unit-label">S13</text>
-    </g>
-</g>
-</svg>`;
-
-        // Data Mock Demo Bawaan Jasmine Cluster
-        const demoMockDataJasmine = [
-            { id: "E166", status: "Available", luastanah: 120, luasbangunan: 80, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "E167", status: "Sold", luastanah: 150, luasbangunan: 110, kamartidur: 4, kamarmandi: 3, ruangtamu: "2 Utama", carport: "2 Mobil" },
-            { id: "E175", status: "Reserved", luastanah: 110, luasbangunan: 70, kamartidur: 2, kamarmandi: 1, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "E176", status: "Available", luastanah: 125, luasbangunan: 85, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "E185", status: "Available", luastanah: 115, luasbangunan: 75, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "E186", status: "Sold", luastanah: 130, luasbangunan: 90, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "2 Mobil" },
-            { id: "E187", status: "Available", luastanah: 140, luasbangunan: 95, kamartidur: 4, kamarmandi: 2, ruangtamu: "1 Utama", carport: "2 Mobil" },
-            { id: "E195", status: "Reserved", luastanah: 120, luasbangunan: 80, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "E196", status: "Available", luastanah: 125, luasbangunan: 85, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "E204", status: "Available", luastanah: 110, luasbangunan: 70, kamartidur: 2, kamarmandi: 1, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "E207", status: "Sold", luastanah: 115, luasbangunan: 75, kamartidur: 3, kamarmandi: 1, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "E208", status: "Reserved", luastanah: 135, luasbangunan: 90, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "2 Mobil" },
-            { id: "E209", status: "Available", luastanah: 145, luasbangunan: 100, kamartidur: 4, kamarmandi: 3, ruangtamu: "2 Utama", carport: "2 Mobil" },
-            { id: "E220", status: "Available", luastanah: 120, luasbangunan: 80, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "E221", status: "Sold", luastanah: 120, luasbangunan: 80, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "E222", status: "Available", luastanah: 160, luasbangunan: 120, kamartidur: 4, kamarmandi: 3, ruangtamu: "2 Utama", carport: "2 Mobil" }
+        // DATA DEFAULT UTAMA (FALLBACK TERUJI AGAR HP SALES LANGSUNG SINKRON OTOMATIS)
+        const defaultClusters = [
+            {
+                id: 0,
+                name: "Jasmine Cluster",
+                sheetUrl: "", 
+                svgCode: `<?xml version="1.1" encoding="utf-8"?><svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1388.98 1076.59" xml:space="preserve"><rect width="1388.98" height="1076.59" fill="#f1f5f9" rx="12" /><text transform="matrix(1.1331 0 0 1 57 96)" style="fill:#3F592B; font-family:'Garamond',serif; font-size:60px; font-weight:bold;">JASMINE CLUSTER</text><g id="E166" class="unit-kavling"><path class="st113" d="M1255.87,422.74l71.11,98.68l-130.86,15.45l18.64-109.53c0,0,16.09,6.89,25.53,4.09 C1249.74,428.61,1255.87,422.74,1255.87,422.74z"/><text x="1221" y="480" font-size="16" font-weight="bold">E166</text></g><g id="E167" class="unit-kavling"><path class="st113" d="M1116.86,415.82c0.12,1.05,16.97,105.98,16.97,105.98l62.3,15.06l18.64-109.53c0,0-12.77-2.81-17.62-14.55 s-6.13-19.15-6.13-19.15L1116.86,415.82z"/><text x="1150" y="455" font-size="16" font-weight="bold">E167</text></g><g id="E175" class="unit-kavling"><path class="st113" d="M1121.96,448.91l-85.15,3.02l-3.11-4.37c0,0-10.85,15.26-15.95,17.99c-5.11,2.72-13.88,5.01-13.88,5.01 l11.5,46.73c0,0,32.07-11.15,38.33-10.34c6.26,0.81,80.13,14.85,80.13,14.85L1121.96,448.91z"/><text x="1054" y="474" font-size="16" font-weight="bold">E175</text></g><g id="E176" class="unit-kavling"><path class="st113" d="M903.7,559.17l26.55-14.3l85.11-27.57l-11.5-46.73c0,0-10.97,1.45-16.41,0.43 c-5.45-1.02-19.74-9.53-19.74-9.53l-2.38,5.45L889.28,490L903.7,559.17z"/><text x="930" y="505" font-size="16" font-weight="bold">E176</text></g></svg>`,
+                rawData: []
+            },
+            {
+                id: 1,
+                name: "Senopati Cluster",
+                sheetUrl: "https://docs.google.com/spreadsheets/d/1X_ZJ9o4-3Y_mXJ3uGcl7K-v98Zf879YF52a_kUv59M0/edit", 
+                svgCode: `<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="100%" height="100%" viewBox="0 0 297 210" version="1.1" id="svg_senopati" xml:space="preserve" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"><defs><style type="text/css">.unit-kavling { cursor: pointer; transition: all 0.3s ease; }.unit-kavling:hover { filter: brightness(1.2); opacity: 0.95; }.unit-shape { fill: #999999; fill-opacity: 0.75; stroke: #334155; stroke-width: 1.5; transition: fill 0.4s ease; }.unit-label { font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-size: 11px; font-weight: bold; fill: #ffffff; pointer-events: none; text-anchor: middle; }</style></defs><rect width="297.00006" height="210.00015" fill="#f8fafc" /><g id="g1" transform="matrix(0.26458333,0,0,0.26458334,4.9379573e-6,-6.4941279e-7)"><image width="1196.6074" height="795.37826" preserveAspectRatio="none" xlink:href="https://docs.google.com/uc?export=download&id=1Gr3Ri-9HqF0y_sJ6Njj_7M8n_n7VnD5L" href="https://docs.google.com/uc?export=download&id=1Gr3Ri-9HqF0y_sJ6Njj_7M8n_n7VnD5L" id="image1" x="-42.534971" y="-1.1975111" /><g id="S16" class="unit-kavling"><circle class="unit-shape" cx="433.96313" cy="537.6496" r="17.14027" /><text x="433.96313" y="541.6" class="unit-label">S16</text></g><g id="S15" class="unit-kavling"><circle class="unit-shape" cx="368.52646" cy="509.66833" r="17.14027" /><text x="368.52646" y="513.6" class="unit-label">S15</text></g><g id="S12" class="unit-kavling"><circle class="unit-shape" cx="421.00601" cy="383.5979" r="17.14027" /><text x="421.00601" y="387.6" class="unit-label">S12</text></g><g id="S11" class="unit-kavling"><circle class="unit-shape" cx="496.24469" cy="408.27228" r="17.14027" /><text x="496.24469" y="412.2" class="unit-label">S11</text></g><g id="S10" class="unit-kavling"><circle class="unit-shape" cx="659.18433" cy="411.41193" r="17.14027" /><text x="659.18433" y="415.4" class="unit-label">S10</text></g><g id="S09" class="unit-kavling"><circle class="unit-shape" cx="749.80286" cy="249.71022" r="17.14027" /><text x="749.80286" y="253.7" class="unit-label">S09</text></g><g id="S08" class="unit-kavling"><circle class="unit-shape" cx="658.36462" cy="195.59572" r="17.14027" /><text x="658.36462" y="199.6" class="unit-label">S08</text></g><g id="S07" class="unit-kavling"><circle class="unit-shape" cx="538.80579" cy="181.30309" r="17.14027" /><text x="538.80579" y="185.3" class="unit-label">S07</text></g><g id="S06" class="unit-kavling"><circle class="unit-shape" cx="451.77277" cy="179.20407" r="17.14027" /><text x="451.77277" y="183.2" class="unit-label">S06</text></g><g id="S05" class="unit-kavling"><circle class="unit-shape" cx="353.36465" cy="191.55061" r="17.14027" /><text x="353.36465" y="195.5" class="unit-label">S05</text></g><g id="S03" class="unit-kavling"><circle class="unit-shape" cx="258.82446" cy="281.45602" r="17.14027" /><text x="258.82446" y="285.4" class="unit-label">S03</text></g><g id="S02" class="unit-kavling"><circle class="unit-shape" cx="222.56488" cy="368.47253" r="17.14027" /><text x="222.56488" y="372.4" class="unit-label">S02</text></g><g id="S01" class="unit-kavling"><circle class="unit-shape" cx="210.00822" cy="444.40652" r="17.14027" /><text x="210.00822" y="448.4" class="unit-label">S01</text></g></g></svg>`,
+                rawData: []
+            }
         ];
 
-        // Data Mock Demo Bawaan Senopati Cluster
-        const demoMockDataSenopati = [
-            { id: "S01", status: "Available", luastanah: 145, luasbangunan: 95, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "2 Mobil" },
-            { id: "S02", status: "Sold", luastanah: 155, luasbangunan: 110, kamartidur: 4, kamarmandi: 3, ruangtamu: "1 Utama", carport: "2 Mobil" },
-            { id: "S03", status: "Reserved", luastanah: 135, luasbangunan: 90, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "S04", status: "Available", luastanah: 120, luasbangunan: 80, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "S05", status: "Available", luastanah: 120, luasbangunan: 80, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "S06", status: "Sold", luastanah: 130, luasbangunan: 85, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "S07", status: "Available", luastanah: 140, luasbangunan: 90, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "2 Mobil" },
-            { id: "S08", status: "Reserved", luastanah: 160, luasbangunan: 120, kamartidur: 4, kamarmandi: 3, ruangtamu: "2 Utama", carport: "2 Mobil" },
-            { id: "S09", status: "Available", luastanah: 110, luasbangunan: 70, kamartidur: 2, kamarmandi: 1, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "S10", status: "Available", luastanah: 115, luasbangunan: 75, kamartidur: 2, kamarmandi: 1, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "S11", status: "Sold", luastanah: 135, luasbangunan: 90, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil" },
-            { id: "S12", status: "Reserved", luastanah: 140, luasbangunan: 95, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "2 Mobil" },
-            { id: "S13", status: "Available", luastanah: 150, luasbangunan: 100, kamartidur: 4, kamarmandi: 2, ruangtamu: "2 Utama", carport: "2 Mobil" }
-        ];
+        // Sisa Tab 3-10
+        for (let i = 2; i < 10; i++) {
+            defaultClusters.push({
+                id: i,
+                name: `Klaster ${i + 1}`,
+                sheetUrl: "",
+                svgCode: `<svg viewBox="0 0 1388 1076" class="w-full h-auto"><rect width="1388" height="1076" fill="#f1f5f9" rx="16"/><text x="694" y="500" font-size="32" fill="#94a3b8" font-weight="bold" text-anchor="middle">Klaster ${i + 1} Belum Dikonfigurasi</text></svg>`,
+                rawData: []
+            });
+        }
 
-        // State Global Aplikasi (Menggunakan DB Baru 'v6' untuk Melewati Data Rusak Lama)
-        let clusters = [];
-        let activeTabId = 0;
-        const LOCAL_STORAGE_KEY = 'v6_multicluster_db';
+        let clusters = JSON.parse(JSON.stringify(defaultClusters));
+        let activeTabId = 1; // Default buka Senopati
+        const LOCAL_STORAGE_KEY = 'v6_multicluster_db_final';
+        let clickCount = 0;
+        let currentZoom = 1;
 
-        // Saat Halaman Selesai Dimuat Browser
         window.onload = () => {
-            safeCreateIcons();
-            initTabs();
+            initDatabase();
+            checkAdminAuthorization();
+            setupZoomAndPan();
         };
 
-        // Render Ikon Lucide secara Aman
-        function safeCreateIcons() {
-            if (typeof lucide !== 'undefined') {
-                try { lucide.createIcons(); } catch(e) { console.error("Lucide failed", e); }
+        // 🛡️ SECURITY ENGINE: Admin Lock (Triple Click "LIVE" + input password)
+        function checkAdminAuthorization() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('admin') === 'true') {
+                localStorage.setItem('master_stock_admin_active', 'true');
+                showToast("Admin Mode Aktif!", "success");
+            }
+            
+            const isAdmin = localStorage.getItem('master_stock_admin_active') === 'true';
+            if (isAdmin) {
+                document.getElementById('btn-admin-reset').classList.remove('hidden');
+                document.getElementById('btn-admin-settings').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-admin-reset').classList.add('hidden');
+                document.getElementById('btn-admin-settings').classList.add('hidden');
             }
         }
 
-        // Generator Template SVG Simulasi untuk Tab 3 - 10
-        function generatePlaceholderSVG(title) {
-            return `<svg viewBox="0 0 1388.98 1076.59" class="w-full h-auto" id="siteplan-svg">
-                <rect width="1388.98" height="1076.59" fill="#f1f5f9" rx="16" stroke="#cbd5e1" stroke-width="4"/>
-                <rect x="100" y="80" width="1188.98" height="160" rx="12" fill="#e2e8f0"/>
-                <text x="694" y="165" font-family="'Plus Jakarta Sans', sans-serif" font-size="36" fill="#475569" font-weight="bold" text-anchor="middle">${title.toUpperCase()}</text>
-                <text x="694" y="210" font-family="'Plus Jakarta Sans', sans-serif" font-size="18" fill="#94a3b8" text-anchor="middle">Silakan tempel kode SVG asli Anda pada tombol Pengaturan Klaster.</text>
-                
-                <!-- Kavling-Kavling Simulasi Vektor -->
-                <g id="E166" class="unit-kavling"><rect x="150" y="400" width="200" height="200" rx="12" fill="#94a3b8" stroke="#475569" stroke-width="3"/><text x="250" y="510" fill="white" font-size="32" font-weight="bold" text-anchor="middle">E166</text></g>
-                <g id="E167" class="unit-kavling"><rect x="420" y="400" width="200" height="200" rx="12" fill="#94a3b8" stroke="#475569" stroke-width="3"/><text x="520" y="510" fill="white" font-size="32" font-weight="bold" text-anchor="middle">E167</text></g>
-                <g id="E175" class="unit-kavling"><rect x="690" y="400" width="200" height="200" rx="12" fill="#94a3b8" stroke="#475569" stroke-width="3"/><text x="790" y="510" fill="white" font-size="32" font-weight="bold" text-anchor="middle">E175</text></g>
-                <g id="E176" class="unit-kavling"><rect x="960" y="400" width="200" height="200" rx="12" fill="#94a3b8" stroke="#475569" stroke-width="3"/><text x="1060" y="510" fill="white" font-size="32" font-weight="bold" text-anchor="middle">E176</text></g>
-            </svg>`;
+        function triggerAdminUnlock() {
+            clickCount++;
+            if (clickCount === 3) {
+                clickCount = 0;
+                const password = prompt("Masukkan Sandi Akses Admin:");
+                if (password === "erryadmin") {
+                    localStorage.setItem('master_stock_admin_active', 'true');
+                    checkAdminAuthorization();
+                    showToast("Hak Akses Terbuka!", "success");
+                } else if (password !== null) {
+                    alert("Sandi salah!");
+                }
+            }
+            setTimeout(() => { clickCount = 0; }, 2000);
         }
 
-        // Inisialisasi 10 Tab Klaster dengan Validasi Agresif
-        function initTabs() {
+        // CLOUD PERSISTENCE ENGINE: Fetch & Hydration dari Awan
+        async function fetchConfigFromCloud() {
             try {
-                const savedClusters = localStorage.getItem(LOCAL_STORAGE_KEY);
-                let validLoad = false;
-
-                if (savedClusters) {
-                    try {
-                        const parsed = JSON.parse(savedClusters);
-                        // Pastikan data berbentuk array, panjangnya pas 10, dan isinya valid objek (tidak null)
-                        if (Array.isArray(parsed) && parsed.length === 10) {
-                            const allElementsValid = parsed.every(item => item && typeof item === 'object' && 'id' in item && 'name' in item);
-                            if (allElementsValid) {
-                                clusters = parsed;
-                                validLoad = true;
+                // Ambil Meta Data (Nama & URL Sheet)
+                const resMeta = await fetch(`https://kvdb.io/${CLOUD_BUCKET}/meta`);
+                if (resMeta.ok) {
+                    const cloudMeta = await resMeta.json();
+                    if (Array.isArray(cloudMeta)) {
+                        cloudMeta.forEach(cm => {
+                            if (clusters[cm.id]) {
+                                clusters[cm.id].name = cm.name || clusters[cm.id].name;
+                                clusters[cm.id].sheetUrl = cm.sheetUrl || clusters[cm.id].sheetUrl;
                             }
-                        }
-                    } catch(e) {
-                        console.warn("Corrupt database. Re-building a clean slate.", e);
-                    }
-                }
-
-                // Jika data tidak valid atau kosong, buat database awal bersih
-                if (!validLoad) {
-                    clusters = [];
-                    for (let i = 0; i < 10; i++) {
-                        let name = `Klaster ${i + 1}`;
-                        let svg = generatePlaceholderSVG(`Klaster ${i + 1}`);
-                        if (i === 0) {
-                            name = "Jasmine Cluster";
-                            svg = defaultJasmineSVG;
-                        } else if (i === 1) {
-                            name = "Senopati Cluster";
-                            svg = defaultSenopatiSVG;
-                        }
-
-                        clusters.push({
-                            id: i,
-                            name: name,
-                            sheetUrl: "",
-                            svgCode: svg,
-                            rawData: []
                         });
                     }
-                    saveClustersToLocalStorage();
                 }
-
-                // Proteksi pengisian rawData murni saat inisialisasi awal
-                clusters.forEach(c => {
-                    if (!c.rawData || !Array.isArray(c.rawData) || c.rawData.length === 0) {
-                        if (c.id === 0) {
-                            c.rawData = [...demoMockDataJasmine];
-                        } else if (c.id === 1) {
-                            c.rawData = [...demoMockDataSenopati];
-                        } else {
-                            c.rawData = [...demoMockDataJasmine]; // generic placeholder
-                        }
+                
+                // Ambil SVG untuk Tab yang aktif saat ini
+                const resSVG = await fetch(`https://kvdb.io/${CLOUD_BUCKET}/svg_${activeTabId}`);
+                if (resSVG.ok) {
+                    const cloudSVG = await resSVG.text();
+                    if (cloudSVG && cloudSVG.trim() !== "") {
+                        clusters[activeTabId].svgCode = cloudSVG;
                     }
-                });
-
-                renderTabsUI();
-                switchTab(0);
-            } catch(error) {
-                showAppCrashBox(error);
+                }
+            } catch (e) {
+                console.warn("Gagal terhubung database awan, menggunakan memori lokal.", e);
             }
         }
 
-        // Simpan Data Ke LocalStorage
-        function saveClustersToLocalStorage() {
+        async function initDatabase() {
+            // Muat fallback memori lokal terlebih dahulu agar cepat tampil
+            const savedLocal = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedLocal) {
+                try {
+                    const parsed = JSON.parse(savedLocal);
+                    parsed.forEach((saved, index) => {
+                        clusters[index].name = saved.name || clusters[index].name;
+                        clusters[index].sheetUrl = saved.sheetUrl || clusters[index].sheetUrl;
+                        clusters[index].svgCode = saved.svgCode || clusters[index].svgCode;
+                    });
+                } catch(e) {}
+            }
+            
+            // Muat database awan untuk menyamakan perubahan lintas HP sales
+            await fetchConfigFromCloud();
+            
+            renderTabsUI();
+            switchTab(activeTabId);
+        }
+
+        async function saveConfigToCloud() {
+            try {
+                setStatus("Menyimpan ke Awan...");
+                // 1. Simpan metadata terkompresi
+                const metaToSave = clusters.map(c => ({ id: c.id, name: c.name, sheetUrl: c.sheetUrl }));
+                await fetch(`https://kvdb.io/${CLOUD_BUCKET}/meta`, {
+                    method: 'POST',
+                    body: JSON.stringify(metaToSave)
+                });
+
+                // 2. Simpan SVG tab aktif ke jalurnya sendiri
+                const activeCluster = clusters[activeTabId];
+                await fetch(`https://kvdb.io/${CLOUD_BUCKET}/svg_${activeTabId}`, {
+                    method: 'POST',
+                    body: activeCluster.svgCode
+                });
+                
+                setStatus("Berhasil disinkronkan ke semua HP!", false);
+            } catch (e) {
+                console.error(e);
+                setStatus("Gagal menyimpan database awan.", true);
+            }
+        }
+
+        function saveToLocalStorage() {
             try {
                 const configToSave = clusters.map(c => ({
                     id: c.id,
@@ -470,20 +354,16 @@
                     svgCode: c.svgCode
                 }));
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(configToSave));
-            } catch(e) {
-                console.error("Failed saving to localStorage", e);
-            }
+            } catch(e) {}
         }
 
-        // Render Navigasi Tab di Bagian Atas
+        // RENDERING UI COMPONENT
         function renderTabsUI() {
             const container = document.getElementById('tabs-container');
-            if (!container) return;
             container.innerHTML = "";
-
             clusters.forEach(c => {
                 const btn = document.createElement('button');
-                btn.className = `px-6 py-3.5 rounded-xl text-sm font-bold transition whitespace-nowrap flex items-center gap-2 ${
+                btn.className = `px-5 py-3 md:py-3.5 rounded-xl text-xs md:text-sm font-bold transition whitespace-nowrap snap-center flex items-center gap-1.5 flex-shrink-0 ${
                     c.id === activeTabId 
                     ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
                     : "bg-slate-50 text-slate-600 hover:bg-slate-100"
@@ -492,46 +372,50 @@
                 btn.onclick = () => switchTab(c.id);
                 container.appendChild(btn);
             });
-
-            safeCreateIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        // Berpindah Tab Klaster
-        function switchTab(id) {
+        async function switchTab(id) {
             activeTabId = id;
             renderTabsUI();
+            resetZoom();
             
+            // Tarik ulang SVG dari awan secara real-time untuk tab yang dibuka
+            setStatus("Memuat konfigurasi klaster...");
+            try {
+                const resSVG = await fetch(`https://kvdb.io/${CLOUD_BUCKET}/svg_${activeTabId}`);
+                if (resSVG.ok) {
+                    const cloudSVG = await resSVG.text();
+                    if (cloudSVG && cloudSVG.trim() !== "") {
+                        clusters[activeTabId].svgCode = cloudSVG;
+                    }
+                }
+            } catch(e) {}
+
             const activeCluster = clusters[activeTabId];
             document.getElementById('active-cluster-title').innerText = activeCluster.name;
+            document.getElementById('siteplan-container').innerHTML = activeCluster.svgCode;
 
-            // Load SVG Siteplan tab aktif
-            if (activeCluster.svgCode) {
-                updateSiteplan(activeCluster.svgCode);
-            }
-
-            // Jalankan Sinkronisasi / Render
             if (activeCluster.sheetUrl) {
                 fetchSheet(activeCluster.sheetUrl);
             } else {
+                generateDemoData();
                 renderDashboard();
-                setStatus("Menggunakan data simulasi offline. Hubungkan ke Google Sheets melalui Pengaturan.", false);
+                setStatus("Menggunakan data simulasi offline.", false);
             }
         }
 
-        // Set Pesan Logger di Header
         function setStatus(msg, isError = false) {
             const el = document.getElementById('connection-status');
-            if (!el) return;
             el.innerText = `Status: ${msg}`;
-            el.className = isError ? "log-error text-xs mt-1" : "log-success text-xs mt-1";
+            el.className = isError ? "log-error text-[10px] md:text-xs mt-1" : "log-success text-[10px] md:text-xs mt-1";
         }
 
-        // FUNGSI UTAMA SINKRONISASI GOOGLE SHEETS VIA JSONP (ANTI-CORS)
+        // SINKRONISASI LIVE SENSING ENGINE (JSONP BYPASS CORS)
         async function fetchSheet(url) {
             if (!url) return;
-            setStatus("Menghubungkan ke Google Sheets...");
+            setStatus("Sinkronisasi database live...");
             
-            // Deteksi ID Google Sheets dari URL biasa
             let spreadsheetId = "";
             try {
                 if (url.includes('/d/')) {
@@ -540,66 +424,46 @@
                     spreadsheetId = url.split('key=')[1].split('&')[0];
                 }
             } catch(e) {
-                setStatus("Format URL Google Sheets tidak valid.", true);
+                setStatus("Format link Google Sheets salah.", true);
                 return;
             }
 
-            if (!spreadsheetId) {
-                setStatus("Gagal membaca Spreadsheet ID.", true);
-                return;
-            }
-
-            // Eksekusi pemanggilan visualisasi JSONP (Menembus Protokol Lokal file://)
-            const oldScript = document.getElementById('gviz-jsonp-loader');
+            const oldScript = document.getElementById('gviz-jsonp');
             if (oldScript) oldScript.remove();
 
             const script = document.createElement('script');
-            script.id = 'gviz-jsonp-loader';
-            script.src = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=responseHandler:handleJSONPResponse`;
-            script.onerror = () => {
-                setStatus("Gagal memuat data dari Google Server (CORS/Internet Block).", true);
-            };
+            script.id = 'gviz-jsonp';
+            script.src = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=responseHandler:handleJSONP`;
             document.body.appendChild(script);
         }
 
-        // Handler global JSONP response Google Viz API
-        window.handleJSONPResponse = function(response) {
+        window.handleJSONP = function(response) {
             if (!response || response.status !== 'ok') {
-                setStatus("Gagal memuat JSONP dari Google Sheets. Pastikan dokumen di-share secara publik.", true);
+                setStatus("Gagal memuat. Pastikan izin akses Google Sheets diatur pelihat publik.", true);
                 return;
             }
-
             try {
                 const table = response.table;
                 const cols = table.cols.map(c => (c.label || '').trim().toLowerCase().replace(/\s/g, ""));
-                
                 const parsedRows = table.rows.map(row => {
                     let obj = {};
-                    row.c.forEach((cell, i) => {
-                        if (cols[i]) {
-                            obj[cols[i]] = cell ? (cell.v !== null ? String(cell.v).trim() : '') : '';
-                        }
-                    });
+                    row.c.forEach((cell, i) => { if (cols[i]) obj[cols[i]] = cell ? String(cell.v).trim() : ''; });
                     return obj;
                 });
-
-                // Simpan data di memori tab aktif
                 clusters[activeTabId].rawData = parsedRows;
                 renderDashboard();
-                setStatus("Sinkronisasi Live Berhasil!", false);
-            } catch (error) {
-                setStatus(`Gagal memparsing struktur data: ${error.message}`, true);
+                setStatus("Live Sinkron Aktif!", false);
+            } catch(e) {
+                setStatus("Gagal memproses struktur baris data.", true);
             }
         };
 
-        // Render data dashboard aktif
         function renderDashboard() {
             updateStats();
             renderList();
-            applyColorsToSVG();
+            applyColors();
         }
 
-        // Update Counter Statistik
         function updateStats() {
             const data = clusters[activeTabId].rawData || [];
             document.getElementById('stat-total').innerText = data.length;
@@ -608,241 +472,224 @@
             document.getElementById('stat-sold').innerText = data.filter(u => u.status?.toLowerCase() === 'sold').length;
         }
 
-        // Render List Stok Unit Kanan
         function renderList() {
-            const searchInput = document.getElementById('search');
-            const search = searchInput ? searchInput.value.toLowerCase() : "";
+            const search = document.getElementById('search').value.toLowerCase();
             const wrapper = document.getElementById('list-wrapper');
-            if (!wrapper) return;
             wrapper.innerHTML = "";
-
             const data = clusters[activeTabId].rawData || [];
-            const filtered = data.filter(u => u.id && String(u.id).toLowerCase().includes(search));
-
+            const filtered = data.filter(u => String(u.id).toLowerCase().includes(search));
+            
             if (filtered.length === 0) {
-                wrapper.innerHTML = `<p class="text-xs text-slate-400 text-center mt-10">Unit tidak ditemukan.</p>`;
+                wrapper.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">Kavling tidak ditemukan.</p>`;
                 return;
             }
 
             filtered.forEach(u => {
-                const status = u.status?.toLowerCase() || "unknown";
+                const status = u.status?.toLowerCase() || "available";
                 const div = document.createElement('div');
-                div.className = "p-3 bg-white border border-slate-100 rounded-xl flex justify-between items-center hover:shadow-md transition cursor-pointer";
+                div.className = "p-3 bg-white border border-slate-100 rounded-xl flex justify-between items-center cursor-pointer hover:shadow-md transition active:scale-98";
                 div.onclick = () => showDetail(u);
-                div.innerHTML = `<div><p class="text-sm font-bold">Unit ${u.id || '-'}</p><p class="text-[10px] text-slate-400">LT: ${u.luastanah || 0}m² / LB: ${u.luasbangunan || 0}m²</p></div>
+                div.innerHTML = `<div><p class="text-sm font-bold">Unit ${u.id}</p><p class="text-[10px] text-slate-400">LT: ${u.luastanah || 120}m² / LB: ${u.luasbangunan || 80}m²</p></div>
                     <span class="text-[9px] font-black uppercase px-2 py-1 rounded-md ${status === 'available' ? 'bg-emerald-100 text-emerald-700' : status === 'reserved' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}">${status}</span>`;
                 wrapper.appendChild(div);
             });
         }
 
-        // Menyiramkan warna status ke dalam SVG Custom aktif
-        function applyColorsToSVG() {
+        function applyColors() {
             const data = clusters[activeTabId].rawData || [];
-            data.forEach(unit => {
-                if (!unit.id) return;
-                const cleanId = String(unit.id).trim();
-                
-                // Cari elemen SVG berdasarkan ID (mendukung id murni atau dengan awalan unit-)
-                const el = document.getElementById(cleanId) || document.getElementById(`unit-${cleanId}`);
+            data.forEach(u => {
+                const el = document.getElementById(String(u.id).trim());
                 if (el) {
-                    const status = unit.status?.toLowerCase();
+                    const status = u.status?.toLowerCase();
                     const color = status === 'available' ? '#10b981' : (status === 'reserved' ? '#fbbf24' : '#f43f5e');
-                    
-                    // Warnai seluruh shape di dalam grup kavling
-                    const shapes = el.querySelectorAll('rect, path, polygon, circle');
-                    if (shapes.length > 0) {
-                        shapes.forEach(shape => shape.style.fill = color);
-                    } else {
-                        el.style.fill = color;
-                    }
-                    el.style.cursor = "pointer";
-                    el.onclick = () => showDetail(unit);
+                    const shapes = el.querySelectorAll('circle, rect, path');
+                    shapes.forEach(s => s.style.fill = color);
+                    el.onclick = () => showDetail(u);
                 }
             });
         }
 
-        function updateSiteplan(svgCode) {
-            const wrapper = document.getElementById('siteplan-wrapper');
-            if (!wrapper) return;
-            wrapper.innerHTML = svgCode;
-            applyColorsToSVG();
+        function generateDemoData() {
+            const data = [];
+            const prefix = activeTabId === 1 ? "S" : "E";
+            const max = activeTabId === 1 ? 13 : 4;
+            for(let i=1; i<=max; i++) {
+                const num = i < 10 ? "0"+i : i;
+                data.push({
+                    id: activeTabId === 1 ? `${prefix}${num}` : `E166`, 
+                    status: i % 3 === 0 ? "Sold" : (i % 5 === 0 ? "Reserved" : "Available"),
+                    luastanah: 120, luasbangunan: 80, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil"
+                });
+            }
+            clusters[activeTabId].rawData = data;
         }
 
-        // MODAL CONFIGURATION SETTINGS
+        function syncData() {
+            const activeCluster = clusters[activeTabId];
+            if (activeCluster.sheetUrl) fetchSheet(activeCluster.sheetUrl);
+            else syncDataLocalFallback();
+        }
+
+        function syncDataLocalFallback() {
+            generateDemoData();
+            renderDashboard();
+            showToast("Database disinkronkan (Local Fallback Mode)");
+        }
+
+        // MOBILE-FIRST ZOOM & DRAG ENGINE
+        function adjustZoom(factor) {
+            currentZoom = Math.min(Math.max(currentZoom * factor, 0.4), 3.5);
+            applyZoom();
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            applyZoom();
+            const container = document.getElementById('siteplan-container');
+            container.style.transform = `translate(0px, 0px) scale(1)`;
+        }
+
+        function applyZoom() {
+            const container = document.getElementById('siteplan-container');
+            const transformMatch = container.style.transform.match(/translate\(([^)]+)\)/);
+            const currentTranslate = transformMatch ? transformMatch[1] : "0px, 0px";
+            container.style.transform = `translate(${currentTranslate}) scale(${currentZoom})`;
+        }
+
+        function setupZoomAndPan() {
+            const container = document.getElementById('siteplan-container');
+            let isDragging = false;
+            let startX, startY;
+            let translateX = 0, translateY = 0;
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+            });
+
+            window.addEventListener('mouseup', () => { isDragging = false; });
+
+            container.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                container.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
+            });
+
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+            });
+
+            container.addEventListener('touchend', () => { isDragging = false; });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                container.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
+            });
+        }
+
+        // PENGATURAN KLASTER INDIVIDUAL (ADMIN MODE ONLY)
         function openSettings() { 
             const activeCluster = clusters[activeTabId];
             document.getElementById('settings-tab-title').innerText = activeCluster.name;
             document.getElementById('tab-name').value = activeCluster.name;
             document.getElementById('sheet-url').value = activeCluster.sheetUrl || "";
             document.getElementById('svg-input').value = activeCluster.svgCode || "";
-            
             document.getElementById('modal-settings').classList.remove('hidden'); 
         }
-        
-        function closeSettings() { 
-            document.getElementById('modal-settings').classList.add('hidden'); 
-        }
-        
-        function saveAndApply() {
+
+        function closeSettings() { document.getElementById('modal-settings').classList.add('hidden'); }
+
+        async function saveAndApply() {
             const name = document.getElementById('tab-name').value.trim();
             const url = document.getElementById('sheet-url').value.trim();
             const svg = document.getElementById('svg-input').value.trim();
 
-            if (!name) {
-                showToast("Nama klaster tidak boleh kosong.");
-                return;
-            }
+            if (!name) return;
 
-            // Update memori state
             clusters[activeTabId].name = name;
             clusters[activeTabId].sheetUrl = url;
-            clusters[activeTabId].svgCode = svg;
+            if (svg) clusters[activeTabId].svgCode = svg;
 
-            // Simpan ke LocalStorage & refresh UI
-            saveClustersToLocalStorage();
+            // 1. Simpan ke browser admin secara lokal
+            saveToLocalStorage();
+            // 2. Upload perubahan ke awan agar browser HP sales ter-update seketika
+            await saveConfigToCloud();
+            
             renderTabsUI();
-            
-            document.getElementById('active-cluster-title').innerText = name;
-            
-            if (svg) {
-                updateSiteplan(svg);
-            }
-
-            if (url) {
-                fetchSheet(url);
-            } else {
-                if (activeTabId === 0) {
-                    clusters[activeTabId].rawData = [...demoMockDataJasmine];
-                } else if (activeTabId === 1) {
-                    clusters[activeTabId].rawData = [...demoMockDataSenopati];
-                } else {
-                    clusters[activeTabId].rawData = [...demoMockDataJasmine];
-                }
-                renderDashboard();
-            }
-
+            switchTab(activeTabId);
             closeSettings();
-            showToast(`Klaster ${name} berhasil dikonfigurasi!`, "success");
+            showToast("Konfigurasi tersimpan dan disinkronkan ke Awan!", "success");
         }
 
-        // Reset data khusus untuk tab aktif saat ini
-        function resetCurrentTab() {
-            if (confirm(`Apakah Anda yakin ingin mereset konfigurasi tab: ${clusters[activeTabId].name}?`)) {
-                let defaultSvg = generatePlaceholderSVG(`Klaster ${activeTabId + 1}`);
-                let mockData = [...demoMockDataJasmine];
-                
-                if (activeTabId === 0) {
-                    defaultSvg = defaultJasmineSVG;
-                    mockData = [...demoMockDataJasmine];
-                } else if (activeTabId === 1) {
-                    defaultSvg = defaultSenopatiSVG;
-                    mockData = [...demoMockDataSenopati];
-                }
-
-                clusters[activeTabId] = {
-                    id: activeTabId,
-                    name: activeTabId === 0 ? "Jasmine Cluster" : (activeTabId === 1 ? "Senopati Cluster" : `Klaster ${activeTabId + 1}`),
-                    sheetUrl: "",
-                    svgCode: defaultSvg,
-                    rawData: mockData
-                };
-                saveClustersToLocalStorage();
+        async function resetCurrentTab() {
+            if (confirm("Reset konfigurasi tab ini ke default?")) {
+                clusters[activeTabId] = JSON.parse(JSON.stringify(defaultClusters[activeTabId]));
+                saveToLocalStorage();
+                await saveConfigToCloud();
                 closeSettings();
                 switchTab(activeTabId);
-                showToast("Tab berhasil direset.", "success");
+                showToast("Tab direset ke pengaturan asal.");
             }
         }
 
-        // Tombol Hard Reset Total Darurat
-        function hardResetApp() {
-            if (confirm("⚠️ PERINGATAN: Ini akan menghapus SELURUH data 10 tab dan memulihkan pengaturan awal. Apakah Anda yakin?")) {
-                localStorage.removeItem(LOCAL_STORAGE_KEY);
-                showToast("Membersihkan database... Memuat ulang halaman.");
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+        async function hardResetApp() {
+            if (confirm("⚠️ PERINGATAN: Hapus seluruh konfigurasi 10 tab di awan dan browser ini?")) {
+                localStorage.clear();
+                try {
+                    // Bersihkan meta data di awan
+                    await fetch(`https://kvdb.io/${CLOUD_BUCKET}/meta`, { method: 'DELETE' });
+                } catch(e) {}
+                window.location.reload();
             }
         }
 
-        function syncData() {
-            const activeCluster = clusters[activeTabId];
-            if (activeCluster.sheetUrl) {
-                fetchSheet(activeCluster.sheetUrl);
-            } else {
-                showToast("Link Google Sheets belum dikonfigurasi untuk tab ini.");
-                openSettings();
-            }
-        }
-
-        // MODAL DETAIL UNIT POP-UP
+        // MODAL DETAIL POP-UP (NATIVE BOTTOM SHEET Ergonomics)
         function showDetail(unit) {
-            document.getElementById('det-id').innerText = unit.id || '-';
-            document.getElementById('det-status-text').innerText = unit.status || 'UNKNOWN';
-            document.getElementById('det-lt').innerText = (unit.luastanah || '0') + " m²";
-            document.getElementById('det-lb').innerText = (unit.luasbangunan || '0') + " m²";
-            document.getElementById('det-kt').innerText = unit.kamartidur || '0';
-            document.getElementById('det-km').innerText = unit.kamarmandi || '0';
-            document.getElementById('det-rt').innerText = unit.ruangtamu || '-';
-            document.getElementById('det-carport').innerText = unit.carport || '-';
-            document.getElementById('det-img').src = unit.floorplan || "https://placehold.co/400x300/e2e8f0/94a3b8?text=Denah+Belum+Ada";
+            document.getElementById('det-id').innerText = unit.id;
+            document.getElementById('det-status-text').innerText = unit.status || 'Available';
+            document.getElementById('det-lt').innerText = (unit.luastanah || '120') + " m²";
+            document.getElementById('det-lb').innerText = (unit.luasbangunan || '80') + " m²";
+            document.getElementById('det-kt').innerText = unit.kamartidur || '3';
+            document.getElementById('det-km').innerText = unit.kamarmandi || '2';
+            document.getElementById('det-rt').innerText = unit.ruangtamu || '1 Utama';
+            document.getElementById('det-carport').innerText = unit.carport || '1 Mobil';
             
-            // Konfigurasi WhatsApp Dinamis
-            const clusterName = clusters[activeTabId].name;
-            const textWa = encodeURIComponent(`Halo Admin, saya ingin menanyakan ketersediaan Unit ${unit.id || '-'} di Klaster ${clusterName} yang berstatus *${unit.status || 'Tersedia'}*. Mohon dikirimkan pricelist & info brosur detailnya ya. Terima kasih!`);
+            const img = document.getElementById('det-img');
+            if (unit.floorplan && unit.floorplan.startsWith('http')) {
+                img.src = unit.floorplan;
+            } else {
+                img.src = "https://placehold.co/400x300/e2e8f0/94a3b8?text=Denah+Cluster";
+            }
+
+            const activeCluster = clusters[activeTabId];
+            const textWa = encodeURIComponent(`Halo Admin, saya tertarik menanyakan ketersediaan Unit ${unit.id} di Klaster ${activeCluster.name} yang berstatus *${unit.status || 'Tersedia'}*. Mohon informasi pricelist & brosur detailnya. Terima kasih!`);
             document.getElementById('det-whatsapp').href = `https://wa.me/628123456789?text=${textWa}`;
 
-            const header = document.getElementById('det-status-bg');
-            const statusText = unit.status?.toLowerCase();
-            header.className = `p-8 text-white text-center ${statusText === 'available' ? 'bg-emerald-500' : statusText === 'reserved' ? 'bg-amber-500' : 'bg-rose-500'}`;
+            const statusText = (unit.status || 'available').toLowerCase();
+            document.getElementById('det-status-bg').className = `p-6 md:p-8 text-white text-center relative flex-shrink-0 ${statusText === 'available' ? 'bg-emerald-500' : statusText === 'reserved' ? 'bg-amber-500' : 'bg-rose-500'}`;
             document.getElementById('modal-detail').classList.remove('hidden');
         }
 
-        function closeDetail() { 
-            document.getElementById('modal-detail').classList.add('hidden'); 
-        }
+        function closeDetail() { document.getElementById('modal-detail').classList.add('hidden'); }
 
-        // TOAST ENGINE (Ganti Alert Box)
+        // TOAST NOTIFICATION
         function showToast(message, type = "info") {
             const toast = document.createElement('div');
             toast.className = `fixed bottom-5 right-5 z-[100] px-5 py-3 rounded-xl shadow-xl border text-xs font-semibold flex items-center gap-2 transform translate-y-10 opacity-0 transition-all duration-300 ${
-                type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 'bg-slate-955 text-white border-slate-800'
+                type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 'bg-slate-900 text-white border-slate-800'
             }`;
-            
-            const iconName = type === 'success' ? 'check-circle' : 'info';
-            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4"></i><span>${message}</span>`;
+            toast.innerHTML = `<span>${message}</span>`;
             document.body.appendChild(toast);
-            
-            safeCreateIcons();
-
-            setTimeout(() => {
-                toast.classList.remove('translate-y-10', 'opacity-0');
-            }, 10);
-
-            setTimeout(() => {
-                toast.classList.add('translate-y-10', 'opacity-0');
-                setTimeout(() => { toast.remove(); }, 300);
-            }, 3500);
-        }
-
-        // Pelindung Utama jika terjadi kegagalan/crash JavaScript
-        function showAppCrashBox(error) {
-            document.body.innerHTML = `
-                <div class="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-                    <div class="bg-white p-8 rounded-3xl border border-rose-100 shadow-2xl max-w-md w-full text-center">
-                        <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
-                            🚨
-                        </div>
-                        <h2 class="text-xl font-bold text-slate-900 mb-2">Gagal Membuka Dashboard</h2>
-                        <p class="text-slate-500 text-sm mb-6 leading-relaxed">Browser mendeteksi kegagalan memori konfigurasi lama. Bersihkan memori untuk memperbaiki secara instan.</p>
-                        <div class="bg-rose-50/50 p-4 rounded-xl border border-rose-100 text-left font-mono text-[10px] text-rose-700 mb-6 overflow-x-auto">
-                            ${error.stack || error.message || error}
-                        </div>
-                        <button onclick="localStorage.removeItem('${LOCAL_STORAGE_KEY}'); window.location.reload();" class="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition">
-                            Bersihkan Memori &amp; Reset Aplikasi
-                        </button>
-                    </div>
-                </div>
-            `;
+            setTimeout(() => { toast.classList.remove('translate-y-10', 'opacity-0'); }, 10);
+            setTimeout(() => { toast.classList.add('translate-y-10', 'opacity-0'); setTimeout(() => { toast.remove(); }, 300); }, 3000);
         }
     </script>
 </body>
