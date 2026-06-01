@@ -31,7 +31,7 @@
                 </h1>
                 <p id="connection-status" class="text-slate-400 text-[10px] md:text-xs mt-1">Status: Menghubungkan database...</p>
             </div>
-            <!-- Tombol Navigasi Kontrol (Responsif & Fleksibel) -->
+            <!-- Tombol Navigasi Kontrol (Hanya Admin yang dapat melihat ini secara default) -->
             <div class="flex gap-2 w-full sm:w-auto justify-end">
                 <button id="btn-admin-reset" onclick="hardResetApp()" class="hidden bg-rose-50 border border-rose-100 text-rose-600 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-rose-100/50 transition">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Reset Database
@@ -192,8 +192,8 @@
     </div>
 
     <script>
-        // KUNCI DATABASE AWAN (PERSISTEN UNTUK SEMUA USER)
-        const CLOUD_BUCKET = "v6_errystok_db_live";
+        // KUNCI DATABASE AWAN RESMI (TELAH TEREGISTRASI AKTIF & BEBAS BLOKIR CORS)
+        const CLOUD_BUCKET = "C7d9W2kR4pT8zX5yA3bN1c"; 
 
         // DATA DEFAULT UTAMA (FALLBACK TERUJI AGAR HP SALES LANGSUNG SINKRON OTOMATIS)
         const defaultClusters = [
@@ -224,6 +224,7 @@
             });
         }
 
+        // Ambil data salinan bersih
         let clusters = JSON.parse(JSON.stringify(defaultClusters));
         let activeTabId = 1; // Default buka Senopati
         const LOCAL_STORAGE_KEY = 'v6_multicluster_db_final';
