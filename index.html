@@ -149,7 +149,7 @@
     <div id="app-toast" class="fixed bottom-5 right-5 z-[999] px-6 py-3.5 rounded-2xl shadow-xl border text-xs font-semibold flex items-center gap-2 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-none"></div>
 
     <script>
-        // DATA MASTER HARDCODED (DIPERBAIKI 100% KOORDINAT NYAK SEPERTI ASLINYA)
+        // DATA MASTER HARDCODED (TANPA XML PROLOG UNTUK KOMPATIBILITAS MULTI-BROWSER)
         const clusters = [
             {
                 id: 0,
@@ -183,7 +183,7 @@
 <!-- Kanvas Dasar Penyelamat -->
 <rect width="297.00006" height="210.00015" fill="#f8fafc" />
 
-<!-- GAMBAR LATAR BELAKANG (Bypass cookie block & matrix) -->
+<!-- GAMBAR LATAR BELAKANG -->
 <image
    width="297.12708"
    height="210.07916"
@@ -228,41 +228,73 @@
             });
         }
 
-        // DATABASE SINKRONISASI BARU (Murni CORS-Open Tanpa Proteksi Bucket)
+        // DATABASE SINKRONISASI CLOUD (Bypass CORS & Endpoint Put Aktif)
         const DB_URL = "https://api.keyvalue.xyz/a5e9b8f2/erry_masterstock_db_v6";
         let activeTabId = 1; // Default langsung ke Senopati
         let isAdmin = false;
 
-        // FUNGSI LOAD KONFIGURASI GLOBAL DARI AWAN SINKRONISASI (ANTI-FREEZE)
+        // LOAD DARI SINKRONISASI AWAN (DENGAN SINKRONISASI SEMENTARA LOKAL)
         async function loadRemoteConfig() {
-            setStatus("Mempersiapkan sinkronisasi awan...");
+            setStatus("Sinkronisasi database awan...");
+            
+            // 1. Ambil dari Cache Lokal Terlebih dahulu (Kecepatan Memuat Instan)
+            const cachedConfig = localStorage.getItem('erry_masterstock_db_v6');
+            if (cachedConfig) {
+                try {
+                    const parsed = JSON.parse(cachedConfig);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        parsed.forEach(remote => {
+                            const local = clusters.find(c => c.id === remote.id);
+                            if (local) {
+                                local.name = remote.name;
+                                local.sheetUrl = remote.sheetUrl;
+                                local.svgCode = remote.svgCode;
+                            }
+                        });
+                    }
+                } catch(e) {
+                    console.error("Gagal memuat cache lokal", e);
+                }
+            }
+
+            // 2. Tarik Data Terbaru dari Cloud Awan secara Async
             try {
-                // Tambahkan random cache breaker agar tidak terhambat cache browser di HP sales
                 const cacheBreaker = "?cb=" + Date.now();
                 const res = await fetch(DB_URL + cacheBreaker);
                 if (res.ok) {
                     const text = await res.text();
-                    // Validasi apakah isi response adalah JSON Array buatan admin
                     if (text && text.trim().startsWith("[")) {
                         const data = JSON.parse(text);
                         if (Array.isArray(data) && data.length > 0) {
+                            let isDifferent = false;
                             data.forEach(remote => {
                                 const local = clusters.find(c => c.id === remote.id);
                                 if (local) {
-                                    local.name = remote.name;
-                                    local.sheetUrl = remote.sheetUrl;
-                                    local.svgCode = remote.svgCode;
+                                    // Deteksi jika ada perubahan di browser induk admin
+                                    if (local.name !== remote.name || local.sheetUrl !== remote.sheetUrl || local.svgCode !== remote.svgCode) {
+                                        local.name = remote.name;
+                                        local.sheetUrl = remote.sheetUrl;
+                                        local.svgCode = remote.svgCode;
+                                        isDifferent = true;
+                                    }
                                 }
                             });
-                            setStatus("Database awan tersinkronisasi!", false);
+                            
+                            // Jika ada perubahan, simpan di cache lokal & render ulang halaman
+                            if (isDifferent) {
+                                localStorage.setItem('erry_masterstock_db_v6', JSON.stringify(data));
+                                renderTabsUI();
+                                switchTab(activeTabId);
+                            }
+                            setStatus("Sinkronisasi Cloud Aktif & Terhubung!", false);
                             return true;
                         }
                     }
                 }
-                setStatus("Database awan kosong, siap dikonfigurasi.", false);
+                setStatus("Database awan terhubung.", false);
             } catch(e) {
-                console.warn("Database awan offline atau belum diisi.", e);
-                setStatus("Menggunakan database lokal.", false);
+                console.warn("Gagal menyinkronkan data awan real-time.", e);
+                setStatus("Menggunakan database cache lokal.", false);
             }
             return false;
         }
@@ -408,6 +440,11 @@
             }
             try {
                 const table = response.table;
+                if (!table || !table.cols || !table.rows) {
+                    setStatus("Format data Google Sheets tidak sesuai.", true);
+                    return;
+                }
+                
                 // Cek nama kolom, jika header kosong ambil isi baris pertama sebagai fallback
                 const cols = table.cols.map((c, idx) => {
                     let label = (c.label || '').trim().toLowerCase().replace(/\s/g, "");
@@ -428,7 +465,11 @@
 
                 const parsedRows = table.rows.slice(startIdx).map(row => {
                     let obj = {};
-                    row.c.forEach((cell, i) => { if (cols[i]) obj[cols[i]] = cell ? String(cell.v).trim() : ''; });
+                    row.c.forEach((cell, i) => { 
+                        if (cols[i]) {
+                            obj[cols[i]] = (cell && cell.v !== null && cell.v !== undefined) ? String(cell.v).trim() : '';
+                        }
+                    });
                     return obj;
                 });
                 clusters[activeTabId].rawData = parsedRows;
@@ -468,11 +509,14 @@
             
             for (let i = 1; i < lines.length; i++) {
                 const currentLine = splitCSVLine(lines[i]);
-                if (currentLine.length < headers.length) continue;
+                if (currentLine.length === 0) continue; // Skip baris kosong
                 
                 const obj = {};
                 headers.forEach((header, index) => {
-                    let value = currentLine[index] ? currentLine[index].replace(/["']/g, "").trim() : "";
+                    // Proteksi jika kolom opsional di akhir (seperti floorplan) kosong agar unit tidak ter-skip
+                    let value = (index < currentLine.length && currentLine[index]) 
+                        ? currentLine[index].replace(/["']/g, "").trim() 
+                        : "";
                     obj[header] = value;
                 });
                 result.push(obj);
@@ -582,7 +626,7 @@
             document.getElementById('modal-settings').classList.add('hidden');
         }
 
-        // FUNGSI SIMPAN DAN KIRIM DATA KE CLOUD DATABASE SECARA GLOBAL
+        // FUNGSI SIMPAN DAN KIRIM DATA KE CLOUD DATABASE SECARA GLOBAL (METODE SINKRONISASI BARU)
         async function saveAndApply() {
             const name = document.getElementById('tab-name').value.trim();
             const url = document.getElementById('sheet-url').value.trim();
@@ -597,31 +641,51 @@
             switchTab(activeTabId);
             closeSettings();
 
-            // PUSH KE CLOUD STORAGE (API.KEYVALUE.XYZ) AGAR TIM SALES SINKRON INSTAN 100%
+            // SINKRONISASI INSTAN: Simpan di Lokal Komputer Anda Terlebih dahulu
+            const cleanConfig = clusters.map(c => ({
+                id: c.id,
+                name: c.name,
+                sheetUrl: c.sheetUrl,
+                svgCode: c.svgCode
+            }));
+            localStorage.setItem('erry_masterstock_db_v6', JSON.stringify(cleanConfig));
+
+            // SINKRONISASI AWAN: Gunakan metode PUT/POST Adaptif agar HP sales lain langsung sinkron
             setStatus("Mengunggah data perubahan ke awan...");
             try {
-                const cleanConfig = clusters.map(c => ({
-                    id: c.id,
-                    name: c.name,
-                    sheetUrl: c.sheetUrl,
-                    svgCode: c.svgCode
-                }));
+                let success = false;
                 
-                // Fetch POST ke server api.keyvalue.xyz yang memiliki bypass CORS global bawaan
-                const res = await fetch(DB_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(cleanConfig)
-                });
-                
-                if (res.ok) {
+                // Coba metode PUT (Standar Update keyvalue.xyz)
+                try {
+                    const res = await fetch(DB_URL, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(cleanConfig)
+                    });
+                    if (res.ok) success = true;
+                } catch(e) {
+                    console.warn("PUT gagal, mencoba metode POST cadangan...", e);
+                }
+
+                // Coba metode POST jika PUT ditolak oleh Firewall server
+                if (!success) {
+                    const resPost = await fetch(DB_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(cleanConfig)
+                    });
+                    if (resPost.ok) success = true;
+                }
+
+                if (success) {
                     setStatus("Perubahan berhasil disebarkan secara global!", false);
                     showToast("Database disinkronkan secara global!", "success");
                 } else {
-                    throw new Error("Gagal menyambung server awan.");
+                    throw new Error("Respon server tidak valid.");
                 }
             } catch(e) {
                 console.error("Gagal mengirim data sinkronisasi ke awan", e);
-                setStatus("Gagal sinkron awan. Tersimpan lokal di laptop Anda.", true);
+                setStatus("Awan sibuk. Tersimpan sementara di memori browser lokal Anda.", true);
                 showToast("Awan sibuk. Tersimpan lokal di laptop Anda.", "error");
             }
         }
@@ -632,8 +696,8 @@
             if (!toast) return;
             
             toast.innerText = message;
-            toast.className = `fixed bottom-5 right-5 z-[999] px-6 py-3.5 rounded-2xl shadow-xl border text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 pointer-events-none ${
-                type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-100 translate-y-0 opacity-100' : 'bg-slate-900 text-white border-slate-800 translate-y-0 opacity-100'
+            toast.className = `fixed bottom-5 right-5 z-[999] px-6 py-3.5 rounded-2xl shadow-xl border text-xs font-semibold flex items-center gap-2 transform translate-y-0 opacity-100 transition-all duration-300 pointer-events-auto ${
+                type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 'bg-slate-900 text-white border-slate-800'
             }`;
             
             setTimeout(() => {
@@ -643,7 +707,7 @@
 
         async function resetCurrentTab() {
             if (confirm("Reset tab ini ke pengaturan bawaan?")) {
-                localStorage.clear();
+                localStorage.removeItem('erry_masterstock_db_v6');
                 try {
                     await fetch(DB_URL, { method: 'DELETE' });
                 } catch(e) {}
@@ -653,7 +717,7 @@
 
         async function hardResetApp() {
             if (confirm("Reset total semua data dashboard?")) {
-                localStorage.clear();
+                localStorage.removeItem('erry_masterstock_db_v6');
                 try {
                     await fetch(DB_URL, { method: 'DELETE' });
                 } catch(e) {}
