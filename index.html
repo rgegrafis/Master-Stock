@@ -145,8 +145,11 @@
         </div>
     </div>
 
+    <!-- TOAST NOTIFICATION ENGINE -->
+    <div id="app-toast" class="fixed bottom-5 right-5 z-[999] px-6 py-3.5 rounded-2xl shadow-xl border text-xs font-semibold flex items-center gap-2 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-none"></div>
+
     <script>
-        // DATA MASTER HARDCODED (DIPERBAIKI 100% KOORDINAT NYA SEPERTI ASLINYA)
+        // DATA MASTER HARDCODED (DIPERBAIKI 100% KOORDINAT NYAK SEPERTI ASLINYA)
         const clusters = [
             {
                 id: 0,
@@ -225,41 +228,60 @@
             });
         }
 
-        const DB_URL = "https://kvdb.io/C7d9W2kR4pT8zX5yA3bN1c/erry_masterstock_db_v6";
+        // DATABASE SINKRONISASI BARU (Murni CORS-Open Tanpa Proteksi Bucket)
+        const DB_URL = "https://api.keyvalue.xyz/a5e9b8f2/erry_masterstock_db_v6";
         let activeTabId = 1; // Default langsung ke Senopati
         let isAdmin = false;
 
-        // FUNGSI LOAD KONFIGURASI GLOBAL DARI AWAN SINKRONISASI
+        // FUNGSI LOAD KONFIGURASI GLOBAL DARI AWAN SINKRONISASI (ANTI-FREEZE)
         async function loadRemoteConfig() {
             setStatus("Mempersiapkan sinkronisasi awan...");
             try {
-                const res = await fetch(DB_URL);
+                // Tambahkan random cache breaker agar tidak terhambat cache browser di HP sales
+                const cacheBreaker = "?cb=" + Date.now();
+                const res = await fetch(DB_URL + cacheBreaker);
                 if (res.ok) {
-                    const data = await res.json();
-                    if (Array.isArray(data) && data.length > 0) {
-                        data.forEach(remote => {
-                            const local = clusters.find(c => c.id === remote.id);
-                            if (local) {
-                                local.name = remote.name;
-                                local.sheetUrl = remote.sheetUrl;
-                                local.svgCode = remote.svgCode;
-                            }
-                        });
-                        setStatus("Database awan tersinkronisasi!", false);
+                    const text = await res.text();
+                    // Validasi apakah isi response adalah JSON Array buatan admin
+                    if (text && text.trim().startsWith("[")) {
+                        const data = JSON.parse(text);
+                        if (Array.isArray(data) && data.length > 0) {
+                            data.forEach(remote => {
+                                const local = clusters.find(c => c.id === remote.id);
+                                if (local) {
+                                    local.name = remote.name;
+                                    local.sheetUrl = remote.sheetUrl;
+                                    local.svgCode = remote.svgCode;
+                                }
+                            });
+                            setStatus("Database awan tersinkronisasi!", false);
+                            return true;
+                        }
                     }
                 }
+                setStatus("Database awan kosong, siap dikonfigurasi.", false);
             } catch(e) {
-                console.warn("Database awan sibuk, menggunakan data default lokal.", e);
-                setStatus("Menggunakan data default lokal.", false);
+                console.warn("Database awan offline atau belum diisi.", e);
+                setStatus("Menggunakan database lokal.", false);
             }
+            return false;
         }
 
         window.onload = async () => {
             checkAdminMode();
-            await loadRemoteConfig(); // Load konfigurasi terbaru dari awan
+            
+            // 1. RENDERING LOKAL INSTAN (Mencegah Blank/Freeze jika awan lambat)
             renderTabsUI();
             switchTab(1); // Mulai pada tab Senopati
             setupAdminTriggers();
+
+            // 2. KONEKSI AWAN DI LATAR BELAKANG (Asynchronous Non-Blocking)
+            loadRemoteConfig().then((synced) => {
+                if (synced) {
+                    renderTabsUI();
+                    switchTab(activeTabId);
+                }
+            });
         };
 
         // Memeriksa status admin lewat URL (?admin=true)
@@ -281,9 +303,9 @@
                     const pwd = prompt("Masukkan Password Admin:");
                     if (pwd === "erryadmin") {
                         enableAdminFeatures();
-                        alert("Mode Admin Hack Aktif! Tombol edit klaster sekarang terlihat.");
+                        showToast("Mode Admin Aktif! Tombol edit klaster sekarang terlihat.", "success");
                     } else {
-                        alert("Password Salah.");
+                        showToast("Password Salah.", "error");
                     }
                 }
                 setTimeout(() => { clickCount = 0; }, 2000);
@@ -575,7 +597,7 @@
             switchTab(activeTabId);
             closeSettings();
 
-            // PUSH KE CLOUD STORAGE (KVDB.IO) AGAR HP & BROWSER LAIN SINKRON INSTAN
+            // PUSH KE CLOUD STORAGE (API.KEYVALUE.XYZ) AGAR TIM SALES SINKRON INSTAN 100%
             setStatus("Mengunggah data perubahan ke awan...");
             try {
                 const cleanConfig = clusters.map(c => ({
@@ -584,17 +606,39 @@
                     sheetUrl: c.sheetUrl,
                     svgCode: c.svgCode
                 }));
+                
+                // Fetch POST ke server api.keyvalue.xyz yang memiliki bypass CORS global bawaan
                 const res = await fetch(DB_URL, {
                     method: 'POST',
                     body: JSON.stringify(cleanConfig)
                 });
+                
                 if (res.ok) {
                     setStatus("Perubahan berhasil disebarkan secara global!", false);
+                    showToast("Database disinkronkan secara global!", "success");
+                } else {
+                    throw new Error("Gagal menyambung server awan.");
                 }
             } catch(e) {
                 console.error("Gagal mengirim data sinkronisasi ke awan", e);
-                setStatus("Gagal sinkron awan (Koneksi bermasalah).", true);
+                setStatus("Gagal sinkron awan. Tersimpan lokal di laptop Anda.", true);
+                showToast("Awan sibuk. Tersimpan lokal di laptop Anda.", "error");
             }
+        }
+
+        // TOAST NOTIFICATION ENGINE (Pengganti Alert browser)
+        function showToast(message, type = "info") {
+            const toast = document.getElementById('app-toast');
+            if (!toast) return;
+            
+            toast.innerText = message;
+            toast.className = `fixed bottom-5 right-5 z-[999] px-6 py-3.5 rounded-2xl shadow-xl border text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 pointer-events-none ${
+                type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-100 translate-y-0 opacity-100' : 'bg-slate-900 text-white border-slate-800 translate-y-0 opacity-100'
+            }`;
+            
+            setTimeout(() => {
+                toast.className = "fixed bottom-5 right-5 z-[999] px-6 py-3.5 rounded-2xl shadow-xl border text-xs font-semibold flex items-center gap-2 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-none";
+            }, 3000);
         }
 
         async function resetCurrentTab() {
