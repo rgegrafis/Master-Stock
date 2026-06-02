@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Stock - Sales Control Panel</title>
+    <title>Master Stock - Panel Kontrol Sales</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -11,16 +11,7 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .unit-kavling { transition: all 0.3s ease; cursor: pointer; }
         .unit-kavling:hover { filter: brightness(1.15); opacity: 0.85; stroke: #000; stroke-width: 2px; }
-        
-        #siteplan-wrapper svg { 
-            max-width: 100%; 
-            max-height: 100%; 
-            width: auto; 
-            height: auto; 
-            display: block; 
-            object-fit: contain;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.05)); 
-        }
+        #siteplan-wrapper svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.05)); }
         .st113 { fill: #E2E8F0; stroke: #475569; stroke-width: 1.5; transition: fill 0.5s ease; }
         .log-error { color: #f43f5e; font-weight: 600; }
         .log-success { color: #10b981; font-weight: 600; }
@@ -28,203 +19,205 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="p-3 md:p-8 antialiased">
+<body class="p-4 md:p-8">
 
     <div class="max-w-7xl mx-auto">
         <!-- Header Utama -->
-        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100 mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <span id="brand-badge" onclick="triggerAdminUnlock()" class="bg-indigo-600 text-white px-2.5 py-0.5 rounded-lg text-xs md:text-sm italic cursor-pointer select-none">LIVE</span>
+                <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <span id="live-indicator" class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-sm italic cursor-pointer select-none">LIVE</span>
                     Master Stock
                 </h1>
-                <p id="connection-status" class="text-slate-400 text-[10px] md:text-xs mt-1">Status: Menghubungkan database...</p>
+                <p id="connection-status" class="text-slate-400 text-xs mt-1">Status: Menghubungkan database...</p>
             </div>
-            <!-- Tombol Kontrol Navigasi (Hanya Admin yang dapat melihat ini secara default) -->
-            <div class="flex gap-2 w-full sm:w-auto justify-end">
-                <button id="btn-admin-reset" onclick="hardResetApp()" class="hidden bg-rose-50 border border-rose-100 text-rose-600 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-rose-100/50 transition">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Reset Database
+            <div class="flex gap-2 w-full md:w-auto justify-end">
+                <!-- Tombol manajemen tersembunyi secara bawaan, hanya muncul di mode admin -->
+                <button id="btn-reset-db" onclick="hardResetApp()" class="hidden bg-rose-50 border border-rose-100 text-rose-600 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-rose-100/50 transition">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Reset Database
                 </button>
-                <button id="btn-admin-settings" onclick="openSettings()" class="hidden bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition">
-                    <i data-lucide="settings" class="w-3.5 h-3.5"></i> Set Klaster
+                <button id="btn-settings-db" onclick="openSettings()" class="hidden bg-indigo-50 border border-indigo-100 text-indigo-600 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-indigo-100 transition">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Set Klaster
                 </button>
-                <button onclick="syncData()" class="bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-50 transition">
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sinkron Live
+                <button onclick="syncData()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sinkron Live
                 </button>
             </div>
         </div>
 
-        <!-- Navigasi Tab Horizontal (Swipeable Mobile) -->
-        <div class="bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm mb-4 md:mb-6 overflow-hidden">
-            <div id="tabs-container" class="flex gap-1 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory"></div>
+        <!-- Navigasi Tab Horizontal -->
+        <div class="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm mb-6 overflow-hidden">
+            <div id="tabs-container" class="flex gap-1 overflow-x-auto no-scrollbar scroll-smooth"></div>
         </div>
 
-        <!-- Statistik Dinamis Compact (Grid 2x2 Mobile, 4 sejajar Desktop) -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 md:mb-6">
-            <div class="bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm">
-                <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Total Unit</p>
-                <p id="stat-total" class="text-xl md:text-2xl font-bold text-slate-800">0</p>
-            </div>
-            <div class="bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500">
-                <p class="text-[9px] md:text-[10px] font-bold text-emerald-600 uppercase">Available</p>
-                <p id="stat-available" class="text-xl md:text-2xl font-bold text-slate-800">0</p>
-            </div>
-            <div class="bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-amber-500">
-                <p class="text-[9px] md:text-[10px] font-bold text-amber-600 uppercase">Reserved</p>
-                <p id="stat-reserved" class="text-xl md:text-2xl font-bold text-slate-800">0</p>
-            </div>
-            <div class="bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-rose-500">
-                <p class="text-[9px] md:text-[10px] font-bold text-rose-600 uppercase">Sold</p>
-                <p id="stat-sold" class="text-xl md:text-2xl font-bold text-slate-800">0</p>
-            </div>
+        <!-- Statistik -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><p class="text-[10px] font-bold text-slate-400 uppercase">Total Unit</p><p id="stat-total" class="text-2xl font-bold text-slate-800">0</p></div>
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500"><p class="text-[10px] font-bold text-emerald-600 uppercase">Available</p><p id="stat-available" class="text-2xl font-bold text-slate-800">0</p></div>
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-amber-500"><p class="text-[10px] font-bold text-amber-600 uppercase">Reserved</p><p id="stat-reserved" class="text-2xl font-bold text-slate-800">0</p></div>
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm border-l-4 border-l-rose-500"><p class="text-[10px] font-bold text-rose-600 uppercase">Sold</p><p id="stat-sold" class="text-2xl font-bold text-slate-800">0</p></div>
         </div>
 
-        <!-- Area Tampilan Utama -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-            <!-- Peta Siteplan -->
-            <div class="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm min-h-[380px] md:min-h-[500px] flex flex-col relative">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 md:mb-6">
-                    <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-1.5">
-                        <i data-lucide="map" class="text-indigo-600 w-4.5 h-4.5"></i> 
-                        Klaster: <span id="active-cluster-title" class="text-indigo-600">-</span>
-                    </h3>
-                    <div class="flex gap-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Ready</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-amber-400 rounded-full"></span> Booked</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-rose-500 rounded-full"></span> Sold</span>
+        <!-- Area Utama -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm min-h-[500px] flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2"><i data-lucide="map" class="text-indigo-600 w-5 h-5"></i> Peta Siteplan: <span id="active-cluster-title" class="text-indigo-600">-</span></h3>
+                    <div class="flex gap-3 text-[10px] font-bold uppercase tracking-wider">
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span> Ready</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-amber-400 rounded-full"></span> Booked</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-rose-500 rounded-full"></span> Sold</span>
                     </div>
                 </div>
-                
-                <!-- Floating Zoom Controls (Ergonomis untuk Jempol Mobile) -->
-                <div class="absolute right-6 bottom-6 z-10 flex flex-col gap-2 shadow-sm rounded-xl overflow-hidden border border-slate-100 bg-white/90 backdrop-blur-sm">
-                    <button onclick="adjustZoom(1.25)" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 active:bg-slate-200 border-b border-slate-100 transition"><i data-lucide="plus" class="w-4 h-4"></i></button>
-                    <button onclick="adjustZoom(0.8)" class="w-10 h-10 flex items-center justify-center text-slate-600 hover:bg-slate-100 active:bg-slate-200 border-b border-slate-100 transition"><i data-lucide="minus" class="w-4 h-4"></i></button>
-                    <button onclick="resetZoom()" class="w-10 h-10 flex items-center justify-center text-indigo-600 hover:bg-indigo-50 active:bg-indigo-100 transition"><i data-lucide="maximize" class="w-3.5 h-3.5"></i></button>
-                </div>
-
-                <!-- Wadah Siteplan dengan Batasan Tinggi Mobile -->
-                <div class="flex-1 bg-slate-50 rounded-xl p-2 md:p-4 min-h-[300px] md:min-h-[400px] flex items-center justify-center border border-slate-100 overflow-hidden relative">
-                    <div id="siteplan-wrapper" class="w-full h-full flex items-center justify-center">
-                        <div id="siteplan-container" class="transition-transform duration-200 ease-out origin-center cursor-grab active:cursor-grabbing w-full h-full flex items-center justify-center">
-                            <!-- SVG disuntikkan secara dinamis di sini -->
-                        </div>
-                    </div>
-                </div>
+                <div id="siteplan-wrapper" class="flex-1 bg-slate-50 rounded-xl p-4 min-h-[400px] flex items-center justify-center border border-slate-100 overflow-hidden"></div>
             </div>
 
-            <!-- List Unit Real-Time -->
-            <div class="bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm h-[400px] md:h-[560px] flex flex-col">
-                <h3 class="font-bold text-slate-800 text-sm md:text-base mb-3 md:mb-4">Daftar Unit</h3>
-                <div class="relative mb-3 md:mb-4">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3.5 text-slate-400"></i>
-                    <input type="text" id="search" onkeyup="renderList()" placeholder="Cari nomor unit..." class="w-full pl-10 pr-4 py-2.5 md:py-3 bg-slate-50 rounded-xl text-xs md:text-sm outline-none border border-transparent focus:border-indigo-500 transition">
+            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-[560px] flex flex-col">
+                <h3 class="font-bold text-slate-800 mb-4">Daftar Unit Real-Time</h3>
+                <div class="relative mb-4">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+                    <input type="text" id="search" onkeyup="renderList()" placeholder="Cari unit..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl text-sm outline-none border border-transparent focus:border-indigo-500 transition">
                 </div>
-                <div id="list-wrapper" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div>
+                <div id="list-wrapper" class="flex-1 overflow-y-auto space-y-2 pr-2"></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL CONFIGURATION (ADMIN ONLY) -->
-    <div id="modal-settings" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+    <!-- POP-UP DETAIL UNIT -->
+    <div id="modal-detail" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
+            <div id="det-status-bg" class="p-8 text-white text-center">
+                <h2 id="det-id" class="text-4xl font-bold mb-1">-</h2>
+                <p id="det-status-text" class="text-xs font-bold uppercase tracking-widest opacity-80">-</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[10px] font-bold text-slate-400 uppercase block">Luas Tanah</span><span id="det-lt" class="text-lg font-bold text-slate-700">-</span></div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[10px] font-bold text-slate-400 uppercase block">Luas Bangunan</span><span id="det-lb" class="text-lg font-bold text-slate-700">-</span></div>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-2xl">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-3">Floorplan Denah</p>
+                    <img id="det-img" src="" class="w-full h-44 object-contain rounded-xl bg-white border border-slate-200" alt="Floorplan">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="closeDetail()" class="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-bold transition hover:bg-slate-200">Tutup</button>
+                    <a id="det-whatsapp" href="" target="_blank" class="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 transition">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i> Hubungi Sales
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SETTINGS (Khusus Admin) -->
+    <div id="modal-settings" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="font-bold text-slate-800 flex items-center gap-1.5 text-sm md:text-base">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
                     <i data-lucide="database" class="text-indigo-600"></i> 
                     Konfigurasi: <span id="settings-tab-title" class="text-indigo-600">-</span>
                 </h3>
-                <button onclick="closeSettings()" class="p-2 hover:bg-slate-200 rounded-full transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button onclick="closeSettings()" class="p-2 hover:bg-slate-200 rounded-full transition"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             
-            <div class="p-5 overflow-y-auto flex-1 space-y-5">
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Nama Klaster / Tab</label>
-                    <input type="text" id="tab-name" placeholder="Contoh: Jasmine, Orchid, Sakura..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-600">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Nama Klaster / Tab</label>
+                    <input type="text" id="tab-name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-600">
                 </div>
-
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Link Google Sheets (Live Sync)</label>
-                    <input type="text" id="sheet-url" placeholder="Paste link Google Sheet biasa..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-600">
-                    <p class="text-[9px] text-slate-400 mt-1.5">Masukkan tautan edit browser biasa (Bukan Link Publikasi CSV). Pastikan status hak akses diatur <b>"Anyone with link can View"</b>.</p>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Link Google Sheets (Live Sync)</label>
+                    <input type="text" id="sheet-url" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-600">
                 </div>
-
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Kode Vektor Siteplan (Paste SVG)</label>
-                    <textarea id="svg-input" rows="6" placeholder="Buka file .svg di Notepad, lalu copy dan paste kodenya di sini..." class="w-full p-3 bg-slate-900 text-emerald-400 font-mono text-[9px] rounded-xl outline-none focus:ring-2 focus:ring-indigo-600"></textarea>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Editor Kode SVG</label>
+                    <textarea id="svg-input" rows="8" class="w-full p-4 bg-slate-900 text-emerald-400 font-mono text-[10px] rounded-xl outline-none focus:ring-2 focus:ring-indigo-600"></textarea>
                 </div>
             </div>
 
-            <div class="p-5 bg-slate-50 border-t border-slate-100 flex justify-between gap-2">
-                <button onclick="resetCurrentTab()" class="px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition">Reset Tab Ini</button>
+            <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-between gap-2">
+                <button onclick="resetCurrentTab()" class="px-4 py-2.5 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition">Reset Tab Ini</button>
                 <div class="flex gap-2">
-                    <button onclick="closeSettings()" class="px-4 py-2 text-xs font-bold text-slate-400">Batal</button>
-                    <button onclick="saveAndApply()" class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-indigo-100">Terapkan</button>
+                    <button onclick="closeSettings()" class="px-6 py-2.5 text-sm font-bold text-slate-400">Batal</button>
+                    <button onclick="saveAndApply()" class="bg-indigo-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-100">Simpan &amp; Terapkan</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL DETAIL UNIT (Mobile Bottom Sheet / Desktop Centered Dialog) -->
-    <div id="modal-detail" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all duration-300">
-        <div class="bg-white w-full max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[90vh]">
-            <div id="det-status-bg" class="p-6 md:p-8 text-white text-center relative flex-shrink-0">
-                <h2 id="det-id" class="text-3xl md:text-4xl font-bold mb-1">-</h2>
-                <p id="det-status-text" class="text-[10px] font-bold uppercase tracking-widest opacity-80">-</p>
-                <button onclick="closeDetail()" class="absolute right-4 top-4 text-white/80 hover:text-white p-1.5 hover:bg-white/10 rounded-full transition"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>
-            <div class="p-5 space-y-4 overflow-y-auto no-scrollbar">
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase block">Luas Tanah</span><span id="det-lt" class="text-sm md:text-base font-bold text-slate-700">-</span></div>
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase block">Luas Bangunan</span><span id="det-lb" class="text-sm md:text-base font-bold text-slate-700">-</span></div>
-                </div>
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase block">Kamar Tidur</span><span id="det-kt" class="text-sm md:text-base font-bold text-slate-700">-</span></div>
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-[9px] font-bold text-slate-400 uppercase block">Kamar Mandi</span><span id="det-km" class="text-sm md:text-base font-bold text-slate-700">-</span></div>
-                </div>
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div><span class="text-[9px] font-bold text-slate-400 uppercase block">Ruang Tamu</span><span id="det-rt" class="font-bold text-slate-700">-</span></div>
-                        <div><span class="text-[9px] font-bold text-slate-400 uppercase block">Carport</span><span id="det-carport" class="font-bold text-slate-700">-</span></div>
-                    </div>
-                </div>
-                <div class="bg-slate-50 p-3 rounded-2xl">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Floorplan Denah</p>
-                    <img id="det-img" src="" class="w-full h-32 md:h-40 object-contain rounded-xl bg-white border border-slate-150" alt="Floorplan">
-                </div>
-            </div>
-            <div class="p-4 bg-slate-50 border-t border-slate-100 flex gap-2.5 flex-shrink-0">
-                <button onclick="closeDetail()" class="flex-1 py-3 bg-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-300 transition">Tutup</button>
-                <a id="det-whatsapp" href="" target="_blank" class="flex-1 py-3 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 hover:bg-emerald-700 transition">
-                    <i data-lucide="message-circle" class="w-4 h-4"></i> Hubungi Sales
-                </a>
             </div>
         </div>
     </div>
 
     <script>
-        // KUNCI DATABASE AWAN RESMI (TELAH TEREGISTRASI AKTIF & BEBAS BLOKIR CORS)
-        const CLOUD_BUCKET = "C7d9W2kR4pT8zX5yA3bN1c"; 
-
-        // DATA DEFAULT UTAMA (FALLBACK TERUJI AGAR HP SALES LANGSUNG SINKRON OTOMATIS)
-        const defaultClusters = [
+        // DATA MASTER HARDCODED (DIPERBAIKI 100% KOORDINAT NYA SEPERTI ASLINYA)
+        const clusters = [
             {
                 id: 0,
-                name: "Jasmine Cluster",
+                name: "Jasmine",
                 sheetUrl: "", 
                 svgCode: `<?xml version="1.1" encoding="utf-8"?><svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1388.98 1076.59" xml:space="preserve"><rect width="1388.98" height="1076.59" fill="#f1f5f9" rx="12" /><text transform="matrix(1.1331 0 0 1 57 96)" style="fill:#3F592B; font-family:'Garamond',serif; font-size:60px; font-weight:bold;">JASMINE CLUSTER</text><g id="E166" class="unit-kavling"><path class="st113" d="M1255.87,422.74l71.11,98.68l-130.86,15.45l18.64-109.53c0,0,16.09,6.89,25.53,4.09 C1249.74,428.61,1255.87,422.74,1255.87,422.74z"/><text x="1221" y="480" font-size="16" font-weight="bold">E166</text></g><g id="E167" class="unit-kavling"><path class="st113" d="M1116.86,415.82c0.12,1.05,16.97,105.98,16.97,105.98l62.3,15.06l18.64-109.53c0,0-12.77-2.81-17.62-14.55 s-6.13-19.15-6.13-19.15L1116.86,415.82z"/><text x="1150" y="455" font-size="16" font-weight="bold">E167</text></g><g id="E175" class="unit-kavling"><path class="st113" d="M1121.96,448.91l-85.15,3.02l-3.11-4.37c0,0-10.85,15.26-15.95,17.99c-5.11,2.72-13.88,5.01-13.88,5.01 l11.5,46.73c0,0,32.07-11.15,38.33-10.34c6.26,0.81,80.13,14.85,80.13,14.85L1121.96,448.91z"/><text x="1054" y="474" font-size="16" font-weight="bold">E175</text></g><g id="E176" class="unit-kavling"><path class="st113" d="M903.7,559.17l26.55-14.3l85.11-27.57l-11.5-46.73c0,0-10.97,1.45-16.41,0.43 c-5.45-1.02-19.74-9.53-19.74-9.53l-2.38,5.45L889.28,490L903.7,559.17z"/><text x="930" y="505" font-size="16" font-weight="bold">E176</text></g></svg>`,
                 rawData: []
             },
             {
                 id: 1,
-                name: "Senopati Cluster",
+                name: "Senopati",
                 sheetUrl: "https://docs.google.com/spreadsheets/d/1X_ZJ9o4-3Y_mXJ3uGcl7K-v98Zf879YF52a_kUv59M0/edit", 
-                svgCode: `<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg viewBox="0 0 297 210" id="svg_senopati" xml:space="preserve" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"><defs><style type="text/css">.unit-kavling { cursor: pointer; transition: all 0.3s ease; }.unit-kavling:hover { filter: brightness(1.2); opacity: 0.95; }.unit-shape { fill: #999999; fill-opacity: 0.75; stroke: #334155; stroke-width: 1.5; transition: fill 0.4s ease; }.unit-label { font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-size: 11px; font-weight: bold; fill: #ffffff; pointer-events: none; text-anchor: middle; }</style></defs><rect width="297" height="210" fill="#f8fafc" /><g id="g1" transform="matrix(0.26458333,0,0,0.26458334,4.9379573e-6,-6.4941279e-7)"><image width="1196.6074" height="795.37826" preserveAspectRatio="none" xlink:href="https://drive.google.com/thumbnail?id=1Gr3Ri-9HqF0y_sJ6Njj_7M8n_n7VnD5L&amp;sz=w1200" href="https://drive.google.com/thumbnail?id=1Gr3Ri-9HqF0y_sJ6Njj_7M8n_n7VnD5L&amp;sz=w1200" id="image1" x="-42.534971" y="-1.1975111" /><g id="S16" class="unit-kavling"><circle class="unit-shape" cx="433.96313" cy="537.6496" r="17.14027" /><text x="433.96313" y="541.6" class="unit-label">S16</text></g><g id="S15" class="unit-kavling"><circle class="unit-shape" cx="368.52646" cy="509.66833" r="17.14027" /><text x="368.52646" y="513.6" class="unit-label">S15</text></g><g id="S12" class="unit-kavling"><circle class="unit-shape" cx="421.00601" cy="383.5979" r="17.14027" /><text x="421.00601" y="387.6" class="unit-label">S12</text></g><g id="S11" class="unit-kavling"><circle class="unit-shape" cx="496.24469" cy="408.27228" r="17.14027" /><text x="496.24469" y="412.2" class="unit-label">S11</text></g><g id="S10" class="unit-kavling"><circle class="unit-shape" cx="659.18433" cy="411.41193" r="17.14027" /><text x="659.18433" y="415.4" class="unit-label">S10</text></g><g id="S09" class="unit-kavling"><circle class="unit-shape" cx="749.80286" cy="249.71022" r="17.14027" /><text x="749.80286" y="253.7" class="unit-label">S09</text></g><g id="S08" class="unit-kavling"><circle class="unit-shape" cx="658.36462" cy="195.59572" r="17.14027" /><text x="658.36462" y="199.6" class="unit-label">S08</text></g><g id="S07" class="unit-kavling"><circle class="unit-shape" cx="538.80579" cy="181.30309" r="17.14027" /><text x="538.80579" y="185.3" class="unit-label">S07</text></g><g id="S06" class="unit-kavling"><circle class="unit-shape" cx="451.77277" cy="179.20407" r="17.14027" /><text x="451.77277" y="183.2" class="unit-label">S06</text></g><g id="S05" class="unit-kavling"><circle class="unit-shape" cx="353.36465" cy="191.55061" r="17.14027" /><text x="353.36465" y="195.5" class="unit-label">S05</text></g><g id="S03" class="unit-kavling"><circle class="unit-shape" cx="258.82446" cy="281.45602" r="17.14027" /><text x="258.82446" y="285.4" class="unit-label">S03</text></g><g id="S02" class="unit-kavling"><circle class="unit-shape" cx="222.56488" cy="368.47253" r="17.14027" /><text x="222.56488" y="372.4" class="unit-label">S02</text></g><g id="S01" class="unit-kavling"><circle class="unit-shape" cx="210.00822" cy="444.40652" r="17.14027" /><text x="210.00822" y="448.4" class="unit-label">S01</text></g></g></svg>`,
+                svgCode: `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="100%"
+   height="100%"
+   viewBox="0 0 297.00006 210.00015"
+   version="1.1"
+   id="svg1"
+   xml:space="preserve"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg">
+<defs id="defs1">
+  <style type="text/css">
+    .unit-kavling { cursor: pointer; transition: all 0.3s ease; }
+    .unit-kavling:hover { filter: brightness(1.2); opacity: 0.95; }
+    .unit-shape { fill: #999999; fill-opacity: 0.75; stroke: #334155; stroke-width: 1.5; transition: fill 0.4s ease; }
+    .unit-label { font-family: 'Plus Jakarta Sans', Arial, sans-serif; font-size: 11px; font-weight: bold; fill: #ffffff; pointer-events: none; text-anchor: middle; }
+  </style>
+</defs>
+
+<!-- Kanvas Dasar Penyelamat -->
+<rect width="297.00006" height="210.00015" fill="#f8fafc" />
+
+<!-- GAMBAR LATAR BELAKANG (DI LUAR GROUP g1 - PRESISI ASLI 100% UNTUK EDGE & SAFARI) -->
+<image
+   width="297.12708"
+   height="210.07916"
+   preserveAspectRatio="none"
+   xlink:href="https://docs.google.com/uc?export=download&amp;id=1Gr3Ri-9HqF0y_sJ6Njj_7M8n_n7VnD5L"
+   href="https://docs.google.com/uc?export=download&amp;id=1Gr3Ri-9HqF0y_sJ6Njj_7M8n_n7VnD5L"
+   id="image1"
+   x="-0.16604804"
+   y="0.12981328" />
+
+<!-- Group Transformasi Matrix Inkscape Asli -->
+<g
+   id="g1"
+   transform="matrix(0.26458333,0,0,0.26458334,4.9379573e-6,-6.4941279e-7)">
+  <g id="S16" class="unit-kavling"><circle class="unit-shape" cx="433.96313" cy="537.6496" r="17.14027" /><text x="433.96313" y="541.6" class="unit-label">S16</text></g>
+  <g id="S15" class="unit-kavling"><circle class="unit-shape" cx="368.52646" cy="509.66833" r="17.14027" /><text x="368.52646" y="513.6" class="unit-label">S15</text></g>
+  <g id="S12" class="unit-kavling"><circle class="unit-shape" cx="421.00601" cy="383.5979" r="17.14027" /><text x="421.00601" y="387.6" class="unit-label">S12</text></g>
+  <g id="S11" class="unit-kavling"><circle class="unit-shape" cx="496.24469" cy="408.27228" r="17.14027" /><text x="496.24469" y="412.2" class="unit-label">S11</text></g>
+  <g id="S10" class="unit-kavling"><circle class="unit-shape" cx="659.18433" cy="411.41193" r="17.14027" /><text x="659.18433" y="415.4" class="unit-label">S10</text></g>
+  <g id="S09" class="unit-kavling"><circle class="unit-shape" cx="749.80286" cy="249.71022" r="17.14027" /><text x="749.80286" y="253.7" class="unit-label">S09</text></g>
+  <g id="S08" class="unit-kavling"><circle class="unit-shape" cx="658.36462" cy="195.59572" r="17.14027" /><text x="658.36462" y="199.6" class="unit-label">S08</text></g>
+  <g id="S07" class="unit-kavling"><circle class="unit-shape" cx="538.80579" cy="181.30309" r="17.14027" /><text x="538.80579" y="185.3" class="unit-label">S07</text></g>
+  <g id="S06" class="unit-kavling"><circle class="unit-shape" cx="451.77277" cy="179.20407" r="17.14027" /><text x="451.77277" y="183.2" class="unit-label">S06</text></g>
+  <g id="S05" class="unit-kavling"><circle class="unit-shape" cx="353.36465" cy="191.55061" r="17.14027" /><text x="353.36465" y="195.5" class="unit-label">S05</text></g>
+  <g id="S03" class="unit-kavling"><circle class="unit-shape" cx="258.82446" cy="281.45602" r="17.14027" /><text x="258.82446" y="285.4" class="unit-label">S03</text></g>
+  <g id="S02" class="unit-kavling"><circle class="unit-shape" cx="222.56488" cy="368.47253" r="17.14027" /><text x="222.56488" y="372.4" class="unit-label">S02</text></g>
+  <g id="S01" class="unit-kavling"><circle class="unit-shape" cx="210.00822" cy="444.40652" r="17.14027" /><text x="210.00822" y="448.4" class="unit-label">S01</text></g>
+</g>
+</svg>`,
                 rawData: []
             }
         ];
 
-        // Sisa Tab 3-10
+        // Tambah Tab Kosong Otomatis untuk Klaster 3 s/d 10
         for (let i = 2; i < 10; i++) {
-            defaultClusters.push({
+            clusters.push({
                 id: i,
                 name: `Klaster ${i + 1}`,
                 sheetUrl: "",
@@ -233,151 +226,59 @@
             });
         }
 
-        // Ambil data salinan bersih
-        let clusters = JSON.parse(JSON.stringify(defaultClusters));
-        let activeTabId = 1; // Default buka Senopati
-        const LOCAL_STORAGE_KEY = 'v6_multicluster_db_final';
-        let clickCount = 0;
-        let currentZoom = 1;
+        let activeTabId = 1; // Default langsung ke Senopati
+        let isAdmin = false;
 
         window.onload = () => {
-            initDatabase();
-            checkAdminAuthorization();
-            setupZoomAndPan();
+            // Bersihkan data LocalStorage lama agar sinkronisasi murni menggunakan hardcoded template di atas
+            localStorage.clear();
+            checkAdminMode();
+            renderTabsUI();
+            switchTab(1); // Mulai pada tab Senopati
+            setupAdminTriggers();
         };
 
-        // 🛡️ SECURITY ENGINE: Admin Lock (Triple Click "LIVE" + input password)
-        function checkAdminAuthorization() {
+        // Memeriksa status admin lewat URL (?admin=true)
+        function checkAdminMode() {
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('admin') === 'true') {
-                localStorage.setItem('master_stock_admin_active', 'true');
-                showToast("Admin Mode Aktif!", "success");
-            }
-            
-            const isAdmin = localStorage.getItem('master_stock_admin_active') === 'true';
-            if (isAdmin) {
-                document.getElementById('btn-admin-reset').classList.remove('hidden');
-                document.getElementById('btn-admin-settings').classList.remove('hidden');
-            } else {
-                document.getElementById('btn-admin-reset').classList.add('hidden');
-                document.getElementById('btn-admin-settings').classList.add('hidden');
+            if (urlParams.get('admin') === 'true' || localStorage.getItem('erry_admin_logged') === 'true') {
+                enableAdminFeatures();
             }
         }
 
-        function triggerAdminUnlock() {
-            clickCount++;
-            if (clickCount === 3) {
-                clickCount = 0;
-                const password = prompt("Masukkan Sandi Akses Admin:");
-                if (password === "erryadmin") {
-                    localStorage.setItem('master_stock_admin_active', 'true');
-                    checkAdminAuthorization();
-                    showToast("Hak Akses Terbuka!", "success");
-                } else if (password !== null) {
-                    alert("Sandi salah!");
-                }
-            }
-            setTimeout(() => { clickCount = 0; }, 2000);
-        }
-
-        // CLOUD PERSISTENCE ENGINE: Fetch & Hydration dari Awan
-        async function fetchConfigFromCloud() {
-            try {
-                // Ambil Meta Data (Nama & URL Sheet)
-                const resMeta = await fetch(`https://kvdb.io/${CLOUD_BUCKET}/meta`);
-                if (resMeta.ok) {
-                    const cloudMeta = await resMeta.json();
-                    if (Array.isArray(cloudMeta)) {
-                        cloudMeta.forEach(cm => {
-                            if (clusters[cm.id]) {
-                                clusters[cm.id].name = cm.name || clusters[cm.id].name;
-                                clusters[cm.id].sheetUrl = cm.sheetUrl || clusters[cm.id].sheetUrl;
-                            }
-                        });
+        // Ketukan Rahasia (Triple Click) pada Label "LIVE" untuk masuk mode admin
+        function setupAdminTriggers() {
+            const liveBtn = document.getElementById('live-indicator');
+            let clickCount = 0;
+            liveBtn.addEventListener('click', () => {
+                clickCount++;
+                if (clickCount === 3) {
+                    clickCount = 0;
+                    const pwd = prompt("Masukkan Password Admin:");
+                    if (pwd === "erryadmin") {
+                        enableAdminFeatures();
+                        alert("Mode Admin Aktif! Tombol edit klaster sekarang terlihat.");
+                    } else {
+                        alert("Password Salah.");
                     }
                 }
-                
-                // Ambil SVG untuk Tab yang aktif saat ini
-                const resSVG = await fetch(`https://kvdb.io/${CLOUD_BUCKET}/svg_${activeTabId}`);
-                if (resSVG.ok) {
-                    const cloudSVG = await resSVG.text();
-                    if (cloudSVG && cloudSVG.trim() !== "") {
-                        clusters[activeTabId].svgCode = cloudSVG;
-                    }
-                }
-            } catch (e) {
-                console.warn("Gagal terhubung database awan, menggunakan memori lokal.", e);
-            }
+                setTimeout(() => { clickCount = 0; }, 2000);
+            });
         }
 
-        async function initDatabase() {
-            // Muat fallback memori lokal terlebih dahulu agar cepat tampil
-            const savedLocal = localStorage.getItem(LOCAL_STORAGE_KEY);
-            if (savedLocal) {
-                try {
-                    const parsed = JSON.parse(savedLocal);
-                    parsed.forEach((saved, index) => {
-                        clusters[index].name = saved.name || clusters[index].name;
-                        clusters[index].sheetUrl = saved.sheetUrl || clusters[index].sheetUrl;
-                        clusters[index].svgCode = saved.svgCode || clusters[index].svgCode;
-                    });
-                } catch(e) {}
-            }
-            
-            // Muat database awan untuk menyamakan perubahan lintas HP sales
-            await fetchConfigFromCloud();
-            
-            renderTabsUI();
-            switchTab(activeTabId);
+        function enableAdminFeatures() {
+            isAdmin = true;
+            localStorage.setItem('erry_admin_logged', 'true');
+            document.getElementById('btn-reset-db').classList.remove('hidden');
+            document.getElementById('btn-settings-db').classList.remove('hidden');
         }
 
-        async function saveConfigToCloud() {
-            try {
-                setStatus("Menyimpan ke Awan...");
-                // 1. Simpan metadata terkompresi
-                const metaToSave = clusters.map(c => ({ id: c.id, name: c.name, sheetUrl: c.sheetUrl }));
-                await fetch(`https://kvdb.io/${CLOUD_BUCKET}/meta`, {
-                    method: 'POST',
-                    body: JSON.stringify(metaToSave)
-                });
-
-                // 2. Simpan SVG tab aktif ke jalurnya sendiri
-                const activeCluster = clusters[activeTabId];
-                await fetch(`https://kvdb.io/${CLOUD_BUCKET}/svg_${activeTabId}`, {
-                    method: 'POST',
-                    body: activeCluster.svgCode
-                });
-                
-                setStatus("Berhasil disinkronkan ke semua HP!", false);
-            } catch (e) {
-                console.error(e);
-                setStatus("Gagal menyimpan database awan.", true);
-            }
-        }
-
-        function saveToLocalStorage() {
-            try {
-                const configToSave = clusters.map(c => ({
-                    id: c.id,
-                    name: c.name,
-                    sheetUrl: c.sheetUrl,
-                    svgCode: c.svgCode
-                }));
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(configToSave));
-            } catch(e) {}
-        }
-
-        // RENDERING UI COMPONENT
         function renderTabsUI() {
             const container = document.getElementById('tabs-container');
             container.innerHTML = "";
             clusters.forEach(c => {
                 const btn = document.createElement('button');
-                btn.className = `px-5 py-3 md:py-3.5 rounded-xl text-xs md:text-sm font-bold transition whitespace-nowrap snap-center flex items-center gap-1.5 flex-shrink-0 ${
-                    c.id === activeTabId 
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
-                    : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                }`;
+                btn.className = `px-6 py-3.5 rounded-xl text-sm font-bold transition whitespace-nowrap flex items-center gap-2 ${c.id === activeTabId ? "bg-indigo-600 text-white shadow-lg" : "bg-slate-50 text-slate-600 hover:bg-slate-100"}`;
                 btn.innerHTML = `<i data-lucide="home" class="w-4 h-4"></i> ${c.name}`;
                 btn.onclick = () => switchTab(c.id);
                 container.appendChild(btn);
@@ -385,47 +286,32 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        async function switchTab(id) {
+        function switchTab(id) {
             activeTabId = id;
             renderTabsUI();
-            resetZoom();
             
-            // Tarik ulang SVG dari awan secara real-time untuk tab yang dibuka
-            setStatus("Memuat konfigurasi klaster...");
-            try {
-                const resSVG = await fetch(`https://kvdb.io/${CLOUD_BUCKET}/svg_${activeTabId}`);
-                if (resSVG.ok) {
-                    const cloudSVG = await resSVG.text();
-                    if (cloudSVG && cloudSVG.trim() !== "") {
-                        clusters[activeTabId].svgCode = cloudSVG;
-                    }
-                }
-            } catch(e) {}
-
             const activeCluster = clusters[activeTabId];
             document.getElementById('active-cluster-title').innerText = activeCluster.name;
-            document.getElementById('siteplan-container').innerHTML = activeCluster.svgCode;
+            document.getElementById('siteplan-wrapper').innerHTML = activeCluster.svgCode;
 
             if (activeCluster.sheetUrl) {
                 fetchSheet(activeCluster.sheetUrl);
             } else {
                 generateDemoData();
                 renderDashboard();
-                setStatus("Menggunakan data simulasi offline.", false);
+                setStatus("Menggunakan data demo offline.", false);
             }
         }
 
         function setStatus(msg, isError = false) {
             const el = document.getElementById('connection-status');
             el.innerText = `Status: ${msg}`;
-            el.className = isError ? "log-error text-[10px] md:text-xs mt-1" : "log-success text-[10px] md:text-xs mt-1";
+            el.className = isError ? "log-error text-xs mt-1" : "log-success text-xs mt-1";
         }
 
-        // SINKRONISASI LIVE SENSING ENGINE (JSONP BYPASS CORS)
         async function fetchSheet(url) {
             if (!url) return;
             setStatus("Sinkronisasi database live...");
-            
             let spreadsheetId = "";
             try {
                 if (url.includes('/d/')) {
@@ -438,61 +324,115 @@
                 return;
             }
 
+            // JALUR UTAMA (Dual-Failsafe): Mencoba direct fetch CSV (Sangat optimal untuk GitHub Pages HTTPS)
+            try {
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`;
+                const response = await fetch(csvUrl);
+                if (response.ok) {
+                    const csvText = await response.text();
+                    const parsed = parseCSV(csvText);
+                    if (parsed && parsed.length > 0) {
+                        clusters[activeTabId].rawData = parsed;
+                        renderDashboard();
+                        setStatus("Sinkronisasi Live Berhasil (CSV)!", false);
+                        return; // Berhasil, potong jalur JSONP
+                    }
+                }
+            } catch (err) {
+                console.warn("Direct CSV Fetch gagal, mencoba jalur alternatif JSONP...", err);
+            }
+
+            // JALUR ALTERNATIF (JSONP Fallback): Menggunakan JSONP jika file dibuka lewat file:// lokal
             const oldScript = document.getElementById('gviz-jsonp');
             if (oldScript) oldScript.remove();
 
             const script = document.createElement('script');
             script.id = 'gviz-jsonp';
-            script.src = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=responseHandler:handleJSONP`;
+            script.src = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=responseHandler:handleJSONPResponse`;
             script.onerror = () => {
                 setStatus("Gagal memuat Google Sheets. Pastikan Link benar & Izin Akses diatur ke Publik.", true);
             };
             document.body.appendChild(script);
         }
 
-        window.handleJSONP = function(response) {
+        window.handleJSONPResponse = function(response) {
             if (!response || response.status !== 'ok') {
-                setStatus("Gagal memuat. Pastikan izin akses Google Sheets diatur pelihat publik.", true);
+                setStatus("Gagal memuat Google Sheets. Pastikan Link benar & Izin Akses diatur ke Publik.", true);
                 return;
             }
             try {
                 const table = response.table;
-                
-                // Ambil label kolom, bersihkan dari spasi/format
-                let cols = table.cols.map(c => (c.label || '').trim().toLowerCase().replace(/\s/g, ""));
-                
-                // FALLBACK CERDAS: Jika cols.label semuanya kosong (Google Sheets tidak mengekspor nama header di metadata),
-                // maka kita ambil header dari baris pertama (rows[0]) tabel data
-                const hasLabels = cols.some(c => c !== "");
-                let startIndex = 0;
-                
-                if (!hasLabels && table.rows.length > 0) {
-                    const firstRow = table.rows[0];
-                    cols = firstRow.c.map(cell => (cell && cell.v !== null) ? String(cell.v).trim().toLowerCase().replace(/\s/g, "") : "");
-                    startIndex = 1; // Baris 1 dibaca sebagai header, data dimulai dari baris ke-2
-                }
-                
-                // Jika masih ada kolom kosong, beri ID fallback berdasarkan urutan (misal col_1, col_2...)
-                cols = cols.map((c, idx) => c || `col_${idx}`);
+                // Cek nama kolom, jika header kosong ambil isi baris pertama sebagai fallback
+                const cols = table.cols.map((c, idx) => {
+                    let label = (c.label || '').trim().toLowerCase().replace(/\s/g, "");
+                    if (!label && table.rows[0]) {
+                        const cellVal = table.rows[0].c[idx];
+                        label = cellVal ? String(cellVal.v).trim().toLowerCase().replace(/\s/g, "") : `col${idx}`;
+                    }
+                    return label;
+                });
 
-                const parsedRows = table.rows.slice(startIndex).map(row => {
+                let startIdx = 0;
+                if (table.rows[0]) {
+                    const row0_vals = table.rows[0].c.map(cell => cell ? String(cell.v).trim().toLowerCase() : '');
+                    if (row0_vals.includes('id') || row0_vals.includes('status')) {
+                        startIdx = 1; // Lewati baris pertama karena merupakan baris judul kolom
+                    }
+                }
+
+                const parsedRows = table.rows.slice(startIdx).map(row => {
                     let obj = {};
-                    row.c.forEach((cell, i) => { 
-                        if (cols[i]) {
-                            obj[cols[i]] = cell ? (cell.v !== null && cell.v !== undefined ? String(cell.v).trim() : '') : ''; 
-                        }
-                    });
+                    row.c.forEach((cell, i) => { if (cols[i]) obj[cols[i]] = cell ? String(cell.v).trim() : ''; });
                     return obj;
                 });
-                
                 clusters[activeTabId].rawData = parsedRows;
                 renderDashboard();
-                setStatus("Live Sinkron Aktif!", false);
+                setStatus("Sinkronisasi Live Berhasil (JSONP)!", false);
             } catch(e) {
-                console.error(e);
-                setStatus("Gagal memproses struktur baris data.", true);
+                setStatus("Error membaca baris tabel.", true);
             }
         };
+
+        function parseCSV(text) {
+            const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line);
+            if (lines.length < 2) return [];
+            
+            // CSV Splitter yang toleran terhadap tanda koma di dalam tanda kutip
+            function splitCSVLine(line) {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"' || char === "'") {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        result.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                result.push(current.trim());
+                return result;
+            }
+
+            const headers = splitCSVLine(lines[0]).map(h => h.replace(/["']/g, "").trim().toLowerCase().replace(/\s/g, ""));
+            const result = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const currentLine = splitCSVLine(lines[i]);
+                if (currentLine.length < headers.length) continue;
+                
+                const obj = {};
+                headers.forEach((header, index) => {
+                    let value = currentLine[index] ? currentLine[index].replace(/["']/g, "").trim() : "";
+                    obj[header] = value;
+                });
+                result.push(obj);
+            }
+            return result;
+        }
 
         function renderDashboard() {
             updateStats();
@@ -515,15 +455,10 @@
             const data = clusters[activeTabId].rawData || [];
             const filtered = data.filter(u => String(u.id).toLowerCase().includes(search));
             
-            if (filtered.length === 0) {
-                wrapper.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">Kavling tidak ditemukan.</p>`;
-                return;
-            }
-
             filtered.forEach(u => {
                 const status = u.status?.toLowerCase() || "available";
                 const div = document.createElement('div');
-                div.className = "p-3 bg-white border border-slate-100 rounded-xl flex justify-between items-center cursor-pointer hover:shadow-md transition active:scale-98";
+                div.className = "p-3 bg-white border border-slate-100 rounded-xl flex justify-between items-center cursor-pointer hover:shadow-md";
                 div.onclick = () => showDetail(u);
                 div.innerHTML = `<div><p class="text-sm font-bold">Unit ${u.id}</p><p class="text-[10px] text-slate-400">LT: ${u.luastanah || 120}m² / LB: ${u.luasbangunan || 80}m²</p></div>
                     <span class="text-[9px] font-black uppercase px-2 py-1 rounded-md ${status === 'available' ? 'bg-emerald-100 text-emerald-700' : status === 'reserved' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}">${status}</span>`;
@@ -548,13 +483,18 @@
         function generateDemoData() {
             const data = [];
             const prefix = activeTabId === 1 ? "S" : "E";
-            const max = activeTabId === 1 ? 13 : 4;
+            const max = activeTabId === 1 ? 16 : 4; // Menyesuaikan dengan ID bulatan yang tersedia
             for(let i=1; i<=max; i++) {
                 const num = i < 10 ? "0"+i : i;
+                // Hanya buat data demo untuk id unit yang ada di peta SVG kita
+                const validIds = ["S01","S02","S03","S05","S06","S07","S08","S09","S10","S11","S12","S15","S16"];
+                const unitId = activeTabId === 1 ? `S${num}` : `E166`;
+                if (activeTabId === 1 && !validIds.includes(unitId)) continue;
+
                 data.push({
-                    id: activeTabId === 1 ? `${prefix}${num}` : `E166`, 
+                    id: unitId,
                     status: i % 3 === 0 ? "Sold" : (i % 5 === 0 ? "Reserved" : "Available"),
-                    luastanah: 120, luasbangunan: 80, kamartidur: 3, kamarmandi: 2, ruangtamu: "1 Utama", carport: "1 Mobil"
+                    luastanah: 120, luasbangunan: 80
                 });
             }
             clusters[activeTabId].rawData = data;
@@ -563,169 +503,66 @@
         function syncData() {
             const activeCluster = clusters[activeTabId];
             if (activeCluster.sheetUrl) fetchSheet(activeCluster.sheetUrl);
-            else syncDataLocalFallback();
         }
 
-        function syncDataLocalFallback() {
-            generateDemoData();
-            renderDashboard();
-            showToast("Database disinkronkan (Local Fallback Mode)");
-        }
-
-        // MOBILE-FIRST ZOOM & DRAG ENGINE
-        function adjustZoom(factor) {
-            currentZoom = Math.min(Math.max(currentZoom * factor, 0.4), 3.5);
-            applyZoom();
-        }
-
-        function resetZoom() {
-            currentZoom = 1;
-            applyZoom();
-            const container = document.getElementById('siteplan-container');
-            container.style.transform = `translate(0px, 0px) scale(1)`;
-        }
-
-        function applyZoom() {
-            const container = document.getElementById('siteplan-container');
-            const transformMatch = container.style.transform.match(/translate\(([^)]+)\)/);
-            const currentTranslate = transformMatch ? transformMatch[1] : "0px, 0px";
-            container.style.transform = `translate(${currentTranslate}) scale(${currentZoom})`;
-        }
-
-        function setupZoomAndPan() {
-            const container = document.getElementById('siteplan-container');
-            let isDragging = false;
-            let startX, startY;
-            let translateX = 0, translateY = 0;
-
-            container.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                startX = e.clientX - translateX;
-                startY = e.clientY - translateY;
-            });
-
-            window.addEventListener('mouseup', () => { isDragging = false; });
-
-            container.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                translateX = e.clientX - startX;
-                translateY = e.clientY - startY;
-                container.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
-            });
-
-            container.addEventListener('touchstart', (e) => {
-                isDragging = true;
-                const touch = e.touches[0];
-                startX = touch.clientX - translateX;
-                startY = touch.clientY - translateY;
-            });
-
-            container.addEventListener('touchend', () => { isDragging = false; });
-
-            container.addEventListener('touchmove', (e) => {
-                if (!isDragging) return;
-                const touch = e.touches[0];
-                translateX = touch.clientX - startX;
-                translateY = touch.clientY - startY;
-                container.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
-            });
-        }
-
-        // PENGATURAN KLASTER INDIVIDUAL (ADMIN MODE ONLY)
-        function openSettings() { 
-            const activeCluster = clusters[activeTabId];
-            document.getElementById('settings-tab-title').innerText = activeCluster.name;
-            document.getElementById('tab-name').value = activeCluster.name;
-            document.getElementById('sheet-url').value = activeCluster.sheetUrl || "";
-            document.getElementById('svg-input').value = activeCluster.svgCode || "";
-            document.getElementById('modal-settings').classList.remove('hidden'); 
-        }
-
-        function closeSettings() { document.getElementById('modal-settings').classList.add('hidden'); }
-
-        async function saveAndApply() {
-            const name = document.getElementById('tab-name').value.trim();
-            const url = document.getElementById('sheet-url').value.trim();
-            const svg = document.getElementById('svg-input').value.trim();
-
-            if (!name) return;
-
-            clusters[activeTabId].name = name;
-            clusters[activeTabId].sheetUrl = url;
-            if (svg) clusters[activeTabId].svgCode = svg;
-
-            // 1. Simpan ke browser admin secara lokal
-            saveToLocalStorage();
-            // 2. Upload perubahan ke awan agar browser HP sales ter-update seketika
-            await saveConfigToCloud();
-            
-            renderTabsUI();
-            switchTab(activeTabId);
-            closeSettings();
-            showToast("Konfigurasi tersimpan dan disinkronkan ke Awan!", "success");
-        }
-
-        async function resetCurrentTab() {
-            if (confirm("Reset konfigurasi tab ini ke default?")) {
-                clusters[activeTabId] = JSON.parse(JSON.stringify(defaultClusters[activeTabId]));
-                saveToLocalStorage();
-                await saveConfigToCloud();
-                closeSettings();
-                switchTab(activeTabId);
-                showToast("Tab direset ke pengaturan asal.");
-            }
-        }
-
-        async function hardResetApp() {
-            if (confirm("⚠️ PERINGATAN: Hapus seluruh konfigurasi 10 tab di awan dan browser ini?")) {
-                localStorage.clear();
-                try {
-                    // Bersihkan meta data di awan
-                    await fetch(`https://kvdb.io/${CLOUD_BUCKET}/meta`, { method: 'DELETE' });
-                } catch(e) {}
-                window.location.reload();
-            }
-        }
-
-        // MODAL DETAIL POP-UP (NATIVE BOTTOM SHEET Ergonomics)
         function showDetail(unit) {
             document.getElementById('det-id').innerText = unit.id;
             document.getElementById('det-status-text').innerText = unit.status || 'Available';
             document.getElementById('det-lt').innerText = (unit.luastanah || '120') + " m²";
             document.getElementById('det-lb').innerText = (unit.luasbangunan || '80') + " m²";
-            document.getElementById('det-kt').innerText = unit.kamartidur || '3';
-            document.getElementById('det-km').innerText = unit.kamarmandi || '2';
-            document.getElementById('det-rt').innerText = unit.ruangtamu || '1 Utama';
-            document.getElementById('det-carport').innerText = unit.carport || '1 Mobil';
+            document.getElementById('det-img').src = "https://placehold.co/400x300/e2e8f0/94a3b8?text=Denah+Cluster";
             
-            const img = document.getElementById('det-img');
-            if (unit.floorplan && unit.floorplan.startsWith('http')) {
-                img.src = unit.floorplan;
-            } else {
-                img.src = "https://placehold.co/400x300/e2e8f0/94a3b8?text=Denah+Cluster";
-            }
-
-            const activeCluster = clusters[activeTabId];
-            const textWa = encodeURIComponent(`Halo Admin, saya tertarik menanyakan ketersediaan Unit ${unit.id} di Klaster ${activeCluster.name} yang berstatus *${unit.status || 'Tersedia'}*. Mohon informasi pricelist & brosur detailnya. Terima kasih!`);
+            const textWa = encodeURIComponent(`Halo Admin, saya ingin menanyakan ketersediaan Unit ${unit.id} di Klaster ${clusters[activeTabId].name} yang berstatus *${unit.status || 'Tersedia'}*. Mohon dikirimkan informasi pricelist-nya. Terima kasih!`);
             document.getElementById('det-whatsapp').href = `https://wa.me/628123456789?text=${textWa}`;
 
             const statusText = (unit.status || 'available').toLowerCase();
-            document.getElementById('det-status-bg').className = `p-6 md:p-8 text-white text-center relative flex-shrink-0 ${statusText === 'available' ? 'bg-emerald-500' : statusText === 'reserved' ? 'bg-amber-500' : 'bg-rose-500'}`;
+            document.getElementById('det-status-bg').className = `p-8 text-white text-center ${statusText === 'available' ? 'bg-emerald-500' : statusText === 'reserved' ? 'bg-amber-500' : 'bg-rose-500'}`;
             document.getElementById('modal-detail').classList.remove('hidden');
         }
 
         function closeDetail() { document.getElementById('modal-detail').classList.add('hidden'); }
 
-        // TOAST NOTIFICATION
-        function showToast(message, type = "info") {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-5 right-5 z-[100] px-5 py-3 rounded-xl shadow-xl border text-xs font-semibold flex items-center gap-2 transform translate-y-10 opacity-0 transition-all duration-300 ${
-                type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 'bg-slate-900 text-white border-slate-800'
-            }`;
-            toast.innerHTML = `<span>${message}</span>`;
-            document.body.appendChild(toast);
-            setTimeout(() => { toast.classList.remove('translate-y-10', 'opacity-0'); }, 10);
-            setTimeout(() => { toast.classList.add('translate-y-10', 'opacity-0'); setTimeout(() => { toast.remove(); }, 300); }, 3000);
+        // MANAJEMEN ADMIN (MUNCUL JIKA KETUK 3X LIVE)
+        function openSettings() {
+            const activeCluster = clusters[activeTabId];
+            document.getElementById('settings-tab-title').innerText = activeCluster.name;
+            document.getElementById('tab-name').value = activeCluster.name;
+            document.getElementById('sheet-url').value = activeCluster.sheetUrl || "";
+            document.getElementById('svg-input').value = activeCluster.svgCode || "";
+            document.getElementById('modal-settings').classList.remove('hidden');
+        }
+
+        function closeSettings() {
+            document.getElementById('modal-settings').classList.add('hidden');
+        }
+
+        function saveAndApply() {
+            const name = document.getElementById('tab-name').value.trim();
+            const url = document.getElementById('sheet-url').value.trim();
+            const svg = document.getElementById('svg-input').value.trim();
+
+            if (!name) return;
+            clusters[activeTabId].name = name;
+            clusters[activeTabId].sheetUrl = url;
+            if (svg) clusters[activeTabId].svgCode = svg;
+
+            renderTabsUI();
+            switchTab(activeTabId);
+            closeSettings();
+        }
+
+        function resetCurrentTab() {
+            if (confirm("Reset tab ini ke pengaturan bawaan?")) {
+                localStorage.clear();
+                window.location.reload();
+            }
+        }
+
+        function hardResetApp() {
+            if (confirm("Reset total semua data dashboard?")) {
+                localStorage.clear();
+                window.location.reload();
+            }
         }
     </script>
 </body>
